@@ -1,4 +1,11 @@
-// --- 1. ГЕНЕРАЦІЯ ЗІРОК ---
+const tg = window.Telegram.WebApp;
+tg.expand(); // Розгорнути на весь екран
+
+// Відображення імені користувача замість статичного тексту
+if (tg.initDataUnsafe.user) {
+    document.querySelector('.logo').innerText = `👨‍🚀 ${tg.initDataUnsafe.user.username.toUpperCase()}`;
+}
+
 function createStars() {
     const container = document.getElementById('starField');
     const starCount = 200; 
