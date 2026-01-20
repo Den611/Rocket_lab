@@ -3,10 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AERO-X | Space Mission Control</title>
-    
+    <title>AERO-X | Heavy Launch System</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
-    
     <link rel="stylesheet" href="CSS/main.css">
 </head>
 <body>
@@ -19,49 +17,112 @@
         </div>
         <div class="status-badge">
             <div class="status-dot"></div>
-            STATUS: SYSTEM READY
+            STATUS: ORBITAL SYNC
         </div>
     </header>
 
     <nav class="planet-nav">
-        <div class="planet-btn planet-earth" title="Earth Base">
+        <div class="planet-wrap">
+            <div class="planet planet-earth"></div>
             <span class="planet-label">HOME</span>
         </div>
-        <div class="planet-btn planet-mars" title="Mars Colony">
+        <div class="planet-wrap">
+            <div class="planet planet-mars"></div>
             <span class="planet-label">MARS</span>
         </div>
-        <div class="planet-btn planet-ice" title="Europa Station">
+        <div class="planet-wrap">
+            <div class="planet planet-ice"></div>
             <span class="planet-label">EUROPA</span>
         </div>
-        <div class="planet-btn planet-gas" title="Titan Outpost">
+        <div class="planet-wrap">
+            <div class="planet planet-gas"></div>
             <span class="planet-label">TITAN</span>
         </div>
     </nav>
 
     <main class="hero-container">
         
-        <div class="rocket-stage">
-            <div class="module r-nose" data-module="nose"></div>
+        <div class="resources-panel">
+            <div class="res-header">SUPPLY MONITOR</div>
             
-            <div class="module r-cabin" data-module="cabin">
-                <div class="window"></div>
-            </div>
-            
-            <div class="module r-body" data-module="body">
-                <span class="logo-print">AERO-X</span>
-                <div class="r-fins">
-                    <div class="module fin-left" data-module="fins"></div>
-                    <div class="module fin-right" data-module="fins"></div>
+            <div class="res-item">
+                <span class="res-icon">⚡</span>
+                <div class="res-data">
+                    <span class="res-name">Energy</span>
+                    <span class="res-value" id="resEnergy">100%</span>
                 </div>
             </div>
-            
-            <div class="module r-engine" data-module="engine"></div>
-            <div class="flame"></div>
+
+            <div class="res-item">
+                <span class="res-icon">⛽</span>
+                <div class="res-data">
+                    <span class="res-name">Liquid H2</span>
+                    <span class="res-value" id="resFuel">98%</span>
+                </div>
+            </div>
+
+            <div class="res-item">
+                <span class="res-icon">🫧</span>
+                <div class="res-data">
+                    <span class="res-name">Oxygen</span>
+                    <span class="res-value" id="resOxygen">100%</span>
+                </div>
+            </div>
+
+            <div class="res-item">
+                <span class="res-icon">💎</span>
+                <div class="res-data">
+                    <span class="res-name">Credits</span>
+                    <span class="res-value" id="resCredits">4,250 M</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="rocket-shaker"> 
+            <div class="rocket-stage">
+                
+                <div class="module r-nose" data-module="nose"></div>
+                
+                <div class="module r-cabin" data-module="cabin">
+                    <div class="window"></div>
+                </div>
+
+                <div class="module r-cargo" data-module="cargo">
+                    <div class="cargo-door"></div>
+                    <span class="tech-label">PAYLOAD</span>
+                </div>
+                
+                <div class="solar-array">
+                    <div class="module solar-left" data-module="solar"></div>
+                    <div class="module solar-right" data-module="solar"></div>
+                </div>
+
+                <div class="module r-body" data-module="body">
+                    <span class="logo-print">HEAVY-X</span>
+                    
+                    <div class="boosters-container">
+                        <div class="module booster left-booster" data-module="booster">
+                            <div class="booster-flame"></div>
+                        </div>
+                        <div class="module booster right-booster" data-module="booster">
+                            <div class="booster-flame"></div>
+                        </div>
+                    </div>
+
+                    <div class="r-fins">
+                        <div class="module fin-left" data-module="fins"></div>
+                        <div class="module fin-right" data-module="fins"></div>
+                    </div>
+                </div>
+                
+                <div class="module r-engine" data-module="engine"></div>
+                <div class="flame main-flame"></div>
+            </div>
         </div>
 
         <div class="info-panel" id="infoPanel">
-            <h2 class="panel-header" id="panelTitle">Module Name</h2>
-            <p class="panel-desc" id="panelDesc">Hover over rocket parts to scan details.</p>
+            <h2 class="panel-header" id="panelTitle">System Scan</h2>
+            <p class="panel-desc" id="panelDesc">Hover modules to initialize scan.</p>
             
             <div class="stats-container">
                 <div class="stat-row">
