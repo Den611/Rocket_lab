@@ -1,0 +1,436 @@
+/* --- ЗМІННІ ТА БАЗОВІ НАЛАШТУВАННЯ --- */
+:root {
+    --bg-deep: #05070a;
+    --bg-panel: rgba(16, 20, 35, 0.65);
+    --accent-cyan: #00f3ff;
+    --accent-purple: #bc13fe;
+    --accent-danger: #ff2a2a;
+    --text-main: #e0e6ed;
+    --text-muted: #8b9bb4;
+    --glow-cyan: 0 0 10px rgba(0, 243, 255, 0.5);
+    --glow-purple: 0 0 15px rgba(188, 19, 254, 0.5);
+    --font-ui: 'Orbitron', sans-serif;
+    --font-body: 'Rajdhani', sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-deep);
+    background: radial-gradient(circle at center, #1a1e2e 0%, #05070a 100%);
+    color: var(--text-main);
+    font-family: var(--font-body);
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* --- ФОН (ЗОРІ) --- */
+.star-field {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
+}
+
+.star {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    opacity: 0.8;
+    animation: twinkle linear infinite;
+}
+
+@keyframes twinkle {
+    0%, 100% { opacity: 0.3; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.2); }
+}
+
+/* --- HEADER --- */
+header {
+    position: sticky;
+    top: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background: rgba(5, 7, 10, 0.8);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(0, 243, 255, 0.1);
+    z-index: 100;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-ui);
+    font-weight: 900;
+    font-size: 1.5rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent-cyan);
+    text-shadow: var(--glow-cyan);
+}
+
+.status-badge {
+    font-family: var(--font-ui);
+    font-size: 0.8rem;
+    padding: 8px 16px;
+    border: 1px solid var(--accent-cyan);
+    color: var(--accent-cyan);
+    background: rgba(0, 243, 255, 0.1);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--accent-cyan);
+    border-radius: 50%;
+    box-shadow: var(--glow-cyan);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(0, 243, 255, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(0, 243, 255, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(0, 243, 255, 0); }
+}
+
+/* --- PLANETARY NAV --- */
+.planet-nav {
+    position: absolute;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 2rem;
+    z-index: 90;
+}
+
+.planet-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #333;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    border: 2px solid transparent;
+    opacity: 0;
+    transform: translateY(-20px);
+    animation: dropIn 0.5s forwards;
+}
+
+.planet-mars { background: radial-gradient(circle at 30% 30%, #ff5e3a, #5c180a); animation-delay: 0.1s; }
+.planet-ice { background: radial-gradient(circle at 30% 30%, #a2d9ff, #1a4c75); animation-delay: 0.2s; }
+.planet-gas { background: radial-gradient(circle at 30% 30%, #e0c3fc, #6a1b9a); animation-delay: 0.3s; }
+.planet-earth { background: radial-gradient(circle at 30% 30%, #4facfe, #00f2fe); box-shadow: 0 0 15px var(--accent-cyan); border: 2px solid var(--accent-cyan); animation-delay: 0s; opacity: 1; transform: translateY(0); }
+
+.planet-btn:hover {
+    transform: scale(1.2) rotate(15deg);
+    box-shadow: 0 0 20px rgba(255,255,255,0.3);
+    z-index: 10;
+}
+
+.planet-label {
+    position: absolute;
+    bottom: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-ui);
+    font-size: 0.7rem;
+    color: var(--accent-cyan);
+    opacity: 0;
+    transition: 0.3s;
+    white-space: nowrap;
+}
+
+.planet-btn:hover .planet-label { opacity: 1; bottom: -30px; }
+
+@keyframes dropIn {
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- HERO SECTION --- */
+.hero-container {
+    display: flex;
+    height: calc(100vh - 80px);
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+/* --- ROCKET CONSTRUCTION --- */
+.rocket-stage {
+    position: relative;
+    width: 200px;
+    height: 500px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: floatRocket 6s ease-in-out infinite;
+    z-index: 50;
+}
+
+.module {
+    cursor: pointer;
+    transition: 0.3s;
+    position: relative;
+}
+
+/* Shapes */
+.r-nose {
+    width: 0; 
+    height: 0; 
+    border-left: 60px solid transparent;
+    border-right: 60px solid transparent;
+    border-bottom: 90px solid #e0e6ed;
+    filter: drop-shadow(0 0 5px rgba(255,255,255,0.1));
+}
+
+.r-cabin {
+    width: 120px;
+    height: 100px;
+    background: #d1d9e6;
+    margin-top: -1px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-left: 2px solid #999;
+    border-right: 2px solid #999;
+}
+
+.window {
+    width: 50px;
+    height: 50px;
+    background: radial-gradient(circle at center, #00f3ff, #005f73);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--accent-cyan);
+    border: 3px solid #333;
+}
+
+.r-body {
+    width: 120px;
+    height: 180px;
+    background: linear-gradient(90deg, #ccc, #eee, #ccc);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    border: 1px solid #999;
+}
+
+.logo-print {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    font-family: var(--font-ui);
+    font-weight: bold;
+    color: #333;
+    font-size: 1.5rem;
+    opacity: 0.5;
+}
+
+.r-fins {
+    position: absolute;
+    bottom: 50px;
+    width: 220px;
+    height: 80px;
+    z-index: -1;
+}
+
+.fin-left, .fin-right {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-bottom: 80px solid #aab;
+}
+
+.fin-left {
+    left: 0;
+    border-left: 50px solid transparent;
+    border-right: 0;
+    transform: skewX(-20deg);
+}
+
+.fin-right {
+    right: 0;
+    border-right: 50px solid transparent;
+    border-left: 0;
+    transform: skewX(20deg);
+}
+
+.r-engine {
+    width: 100px;
+    height: 60px;
+    background: #444;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    border-top: 5px solid #222;
+}
+
+.flame {
+    width: 40px;
+    height: 80px;
+    background: linear-gradient(to bottom, #ffeb3b, #ff5722, transparent);
+    border-radius: 50% 50% 20% 20%;
+    margin-top: -5px;
+    filter: blur(5px);
+    animation: flameFlicker 0.1s infinite alternate;
+    opacity: 0.8;
+}
+
+.module:hover {
+    filter: drop-shadow(0 0 15px var(--accent-cyan));
+    z-index: 10;
+}
+
+.r-body:hover {
+    border-color: var(--accent-cyan);
+    box-shadow: inset 0 0 20px rgba(0, 243, 255, 0.2);
+}
+
+@keyframes floatRocket {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+}
+
+@keyframes flameFlicker {
+    from { height: 70px; transform: scaleX(0.9); }
+    to { height: 90px; transform: scaleX(1.1); }
+}
+
+/* --- INFO / UPGRADE PANEL --- */
+.info-panel {
+    position: absolute;
+    right: 5%;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 350px;
+    background: var(--bg-panel);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-left: 3px solid var(--accent-cyan);
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    transition: opacity 0.3s, transform 0.3s;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.info-panel.active {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+    pointer-events: all;
+}
+
+.panel-header {
+    font-family: var(--font-ui);
+    font-size: 1.5rem;
+    color: var(--accent-cyan);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+
+.panel-desc {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+}
+
+/* Stats Bars */
+.stat-row {
+    margin-bottom: 10px;
+}
+.stat-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    margin-bottom: 4px;
+    color: var(--text-main);
+}
+.progress-bg {
+    width: 100%;
+    height: 6px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+}
+.progress-fill {
+    height: 100%;
+    background: var(--accent-cyan);
+    border-radius: 3px;
+    width: 0%;
+    transition: width 0.5s ease-out;
+    box-shadow: 0 0 5px var(--accent-cyan);
+}
+
+/* Upgrade Button */
+.upgrade-btn {
+    margin-top: 2rem;
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    border: 1px solid var(--accent-cyan);
+    color: var(--accent-cyan);
+    font-family: var(--font-ui);
+    font-weight: bold;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+
+.upgrade-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: var(--accent-cyan);
+    transition: 0.3s;
+    z-index: -1;
+}
+
+.upgrade-btn:hover {
+    color: #000;
+}
+.upgrade-btn:hover::before {
+    left: 0;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .hero-container {
+        flex-direction: column;
+        padding-top: 100px;
+    }
+    .rocket-stage {
+        transform: scale(0.7);
+        animation: none;
+    }
+    .info-panel {
+        position: relative;
+        width: 90%;
+        right: auto;
+        top: auto;
+        transform: translateY(20px);
+        opacity: 1;
+        pointer-events: all;
+    }
+    .planet-nav {
+        top: 60px;
+        gap: 1rem;
+    }
+}
