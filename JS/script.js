@@ -159,3 +159,15 @@ modules.forEach(mod => {
         }, 150);
     });
 });
+
+document.querySelectorAll('.planet-item').forEach(p => {
+    p.addEventListener('click', () => {
+        document
+          .querySelectorAll('.planet-item')
+          .forEach(x => x.classList.remove('active'));
+
+        p.classList.add('active');
+
+        console.log('Load level:', p.querySelector('.planet-name').innerText);
+    });
+});
