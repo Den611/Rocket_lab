@@ -14,30 +14,107 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-    background-color: var(--bg-deep);
-    background: radial-gradient(circle at center, #1b2135 0%, #05070a 100%);
-    color: var(--text-main);
-    font-family: var(--font-body);
-    min-height: 100vh; /* Змінено з height на min-height */
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    font-family: 'Courier New', Courier, monospace; /* Технічний шрифт */
+    color: #fff;
+    
+    /* Дозволяємо вертикальну прокрутку контенту */
+    overflow-y: auto; 
     overflow-x: hidden;
-    overflow-y: auto; /* Дозволяємо вертикальну прокрутку, якщо екран малий */
+    
+    /* Робимо фон body прозорим, щоб було видно space-container під ним */
+    background: transparent; 
 }
-/* --- ЗОРІ --- */
-.star-field { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
-.star {
-    position: absolute; background: white; border-radius: 50%;
-    animation: twinkle linear infinite;
-}
-@keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
 
+/* --- ФОНОВИЙ КОНТЕЙНЕР (КОСМОС) --- */
+#space-container {
+    /* FIXED гарантує, що зорі не рухаються разом зі скролом сторінки */
+    position: fixed; 
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    
+    /* Відправляємо на задній план */
+    z-index: -1; 
+    
+    /* Колір космосу задаємо саме тут */
+    background-color: #05070a;
+    background: radial-gradient(circle at center, #1b2135 0%, #05070a 100%);
+    
+    /* Щоб зорі, які вилітають за межі, не розтягували екран */
+    overflow: hidden; 
+}
+
+/* --- ВИГЛЯД ЗІРКИ --- */
+.star {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    opacity: 0.8;
+    box-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
+    /* Підключаємо анімацію */
+    animation: spaceFlight linear infinite;
+}
+
+/* Блакитні зірки */
+.star.blue {
+    background: #00f3ff;
+    box-shadow: 0 0 6px #00f3ff;
+}
+
+/* Далекі туманні зорі */
+.star.nebula {
+    background: #bd00ff;
+    opacity: 0.4;
+    filter: blur(2px);
+}
+
+/* --- АНІМАЦІЯ ПОЛЬОТУ --- */
+@keyframes spaceFlight {
+    0% {
+        transform: translateY(-10vh); /* Стартуємо трохи вище екрану */
+        opacity: 0;
+    }
+    10% {
+        opacity: 1; /* Плавно з'являємось */
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(110vh); /* Летимо за низ екрану */
+        opacity: 0;
+    }
+}
 /* --- HEADER --- */
 header {
-    position: sticky; top: 0; display: flex; justify-content: space-between;
-    align-items: center; padding: 1rem 2rem;
-    background: rgba(5, 7, 10, 0.8); backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(0, 243, 255, 0.2); z-index: 100;
+    position: sticky; 
+    top: 0; 
+    display: flex; 
+    justify-content: space-between;
+    align-items: center; 
+    padding: 1rem 2rem;
+    /* Напівпрозорий фон з розмиттям */
+    background: rgba(5, 7, 10, 0.8); 
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(0, 243, 255, 0.2); 
+    z-index: 100;
 }
+
+.content {
+    padding: 20px;
+    text-align: center;
+    font-size: 1.2rem;
+}
+
 .logo { font-family: var(--font-ui); font-weight: 900; font-size: 1.5rem; color: var(--accent-cyan); }
+
+.logo img {
+    height: 40px; width: auto; vertical-align: middle; margin-right: 10px;
+}
 .status-badge {
     font-family: var(--font-ui); font-size: 0.8rem; padding: 8px 16px;
     border: 1px solid var(--accent-cyan); color: var(--accent-cyan);

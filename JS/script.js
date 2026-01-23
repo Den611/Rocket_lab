@@ -6,33 +6,64 @@ if (tg.initDataUnsafe.user) {
     document.querySelector('.logo').innerText = `👨‍🚀 ${tg.initDataUnsafe.user.username.toUpperCase()}`;
 }
 
-function createStars() {
-    const container = document.getElementById('starField');
-    const starCount = 200; 
+document.addEventListener("DOMContentLoaded", () => {
+    initHyperSpace();
+});
+
+function initHyperSpace() {
+    const container = document.getElementById('space-container');
+    
+    if (!container) {
+        console.error("Помилка: Не знайдено елемент #space-container");
+        return;
+    }
+
+    const starCount = 300; // Кількість зірок
 
     for (let i = 0; i < starCount; i++) {
         const star = document.createElement('div');
         star.classList.add('star');
-        
-        // Випадкові координати
-        const x = Math.random() * 100;
-        const y = Math.random() * 100;
-        const size = Math.random() * 2 + 0.5;
-        const delay = Math.random() * 5;
 
+        // 1. Випадкова позиція по ширині (0% - 100%)
+        const x = Math.random() * 100;
         star.style.left = `${x}%`;
-        star.style.top = `${y}%`;
+
+        // 2. Визначаємо глибину (швидкість і розмір)
+        const depth = Math.random();
+        let size, duration;
+
+        if (depth > 0.9) { 
+            // Ближній шар (найшвидші)
+            size = Math.random() * 3 + 2; // 2px - 5px
+            duration = Math.random() * 1 + 0.5; // 0.5s - 1.5s
+            star.style.zIndex = "2"; // Поверх інших зірок
+        } else if (depth > 0.6) { 
+            // Середній шар
+            size = Math.random() * 2 + 1;
+            duration = Math.random() * 2 + 2; 
+            if(Math.random() > 0.8) star.classList.add('blue'); // Іноді блакитні
+        } else { 
+            // Далекий шар (повільні)
+            size = Math.random() * 1.5 + 0.5; 
+            duration = Math.random() * 5 + 5; // 5s - 10s
+            star.style.opacity = Math.random() * 0.5 + 0.1;
+            if(Math.random() > 0.9) star.classList.add('nebula');
+        }
+
         star.style.width = `${size}px`;
         star.style.height = `${size}px`;
-        star.style.animationDelay = `${delay}s`;
         
-        // Деякі зірки блакитні
-        if(Math.random() > 0.8) star.style.background = '#a2d9ff';
+        // Швидкість анімації
+        star.style.animationDuration = `${duration}s`;
+        
+        // ВАЖЛИВО: Від'ємна затримка. 
+        // Це змушує зірку думати, що вона почала летіти 5 секунд тому.
+        // Завдяки цьому при відкритті сайту зорі вже по всьому екрану.
+        star.style.animationDelay = `-${Math.random() * 10}s`;
 
         container.appendChild(star);
     }
 }
-createStars();
 
 // --- 2. СИМУЛЯЦІЯ РЕСУРСІВ (НОВЕ) ---
 function simulateResources() {
