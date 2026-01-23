@@ -10,6 +10,8 @@ def get_main_kb_no_family():
 def get_main_kb_with_family():
     kb = [
         [KeyboardButton(text="🌌 Кабінет сім'ї"), KeyboardButton(text="🛸 Ангар (Веб)")],
-        [KeyboardButton(text="📡 Місії"), KeyboardButton(text="❌ Покинути сім'ю")]
+        # Окремі кнопки для Місій та Заводів
+        [KeyboardButton(text="📡 Місії"), KeyboardButton(text="🏭 Інфраструктура")],
+        [KeyboardButton(text="🛒 Магазин"), KeyboardButton(text="❌ Покинути сім'ю")]
     ]
     return ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
