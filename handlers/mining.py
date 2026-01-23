@@ -6,7 +6,7 @@ from datetime import datetime
 router = Router()
 db = Database('space.db')
 
-# Ресурси по планетах (Earth -> Moon -> Mars -> Upiter)
+# Ресурси по планетах (Earth -> Moon -> Mars -> Jupiter)
 PLANET_RESOURCES = {
     "Earth": [
         {"name": "Залізо", "col": "res_iron", "emoji": "⛓", "rate_mod": 1.0},
@@ -20,7 +20,7 @@ PLANET_RESOURCES = {
         {"name": "Кремній", "col": "res_silicon", "emoji": "💾", "rate_mod": 0.8},
         {"name": "Оксид", "col": "res_oxide", "emoji": "🧪", "rate_mod": 0.4}
     ],
-    "Upiter": [
+    "Jupiter": [
         {"name": "Водень", "col": "res_hydrogen", "emoji": "🌫", "rate_mod": 0.7},
         {"name": "Гелій", "col": "res_helium", "emoji": "🎈", "rate_mod": 0.2}
     ]

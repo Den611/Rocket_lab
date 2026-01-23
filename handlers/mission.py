@@ -11,8 +11,8 @@ db = Database('space.db')
 PLANET_PROGRESSION = {
     "Earth": "Moon",  # Земля -> Місяць
     "Moon": "Mars",  # Місяць -> Марс
-    "Mars": "Upiter",  # Марс -> Юпітер
-    "Upiter": "Earth"  # Юпітер -> Кінець (Земля)
+    "Mars": "Jupiter",  # Марс -> Юпітер
+    "Jupiter": "Earth"  # Юпітер -> Кінець (Земля)
 }
 
 
@@ -43,7 +43,7 @@ async def show_missions(message: types.Message):
         "Earth": "🌍",
         "Moon": "🌑",
         "Mars": "🔴",
-        "Upiter": "⚡"
+        "Jupiter": "⚡"
     }
     emoji = emoji_map.get(current_planet, "🌌")
 

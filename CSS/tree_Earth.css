@@ -82,14 +82,86 @@ body, html {
 
 /* Nodes */
 .node {
-    position: absolute; width: 180px; height: 75px;
-    background: rgba(0, 242, 255, 0.05); border: 1px solid rgba(0, 242, 255, 0.3);
-    display: flex; align-items: center; justify-content: center; text-align: center;
-    clip-path: polygon(10% 0, 100% 0, 100% 75%, 90% 100%, 0 100%, 0 25%);
-    transition: 0.3s; z-index: 10;
+    position: absolute; 
+    width: 150px;  /* Трохи вужча */
+    height: 145px; /* Значно менша висота (було 180) */
+    
+    background: rgba(1, 15, 30, 0.9);
+    border: 1px solid rgba(0, 242, 255, 0.3);
+    
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    padding: 8px;
+    
+    clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
+    transition: 0.3s; 
+    z-index: 10;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
 }
-.node:hover { border-color: var(--cyan); box-shadow: 0 0 25px var(--cyan); background: rgba(0, 242, 255, 0.1); }
-.node.highlight { border-color: #fff; box-shadow: 0 0 30px #fff; background: rgba(255, 255, 255, 0.2); }
+
+.node:hover { 
+    border-color: var(--cyan); 
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 242, 255, 0.2); 
+    background: rgba(0, 242, 255, 0.1); 
+}
+
+.node.owned {
+    border-color: #00ff9d;
+    box-shadow: 0 0 10px rgba(0, 255, 157, 0.1);
+}
+
+/* Картинка */
+.node-img-box {
+    width: 100%;
+    height: 60px; /* Зменшено з 80 */
+    background: rgba(255, 255, 255, 0.03);
+    margin-bottom: 5px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed rgba(0, 242, 255, 0.15);
+}
+
+.node-icon {
+    max-width: 70%;
+    max-height: 70%;
+}
+
+/* Текст */
+.node-tier {
+    font-size: 9px;
+    color: var(--cyan);
+    letter-spacing: 1px;
+    margin-bottom: 2px;
+}
+
+.node-title {
+    font-size: 11px;
+    font-weight: bold;
+    line-height: 1.1;
+    color: #fff;
+    margin-bottom: 0; /* Прибираємо зайвий відступ */
+}
+
+/* Галочка */
+.node-status {
+    width: 100%;
+    height: 18px; /* Фіксована висота для статусу */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: auto; /* Притискає до низу, але не сильно */
+}
+
+.checkmark {
+    color: #00ff9d;
+    font-size: 16px;
+    line-height: 1;
+    text-shadow: 0 0 5px #00ff9d;
+}
 
 .line { position: absolute; height: 2px; background: var(--cyan); opacity: 0.2; transform-origin: left; transition: 0.5s; z-index: 5; }
 .line.highlight { opacity: 1; box-shadow: 0 0 20px var(--cyan); height: 3px; animation: flow 2s infinite linear; }
