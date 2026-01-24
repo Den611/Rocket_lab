@@ -9,10 +9,9 @@ from datetime import datetime
 router = Router()
 db = Database('space.db')
 
-# ЧАС ПОЛЬОТУ (ХВИЛИНИ)
 FLIGHT_TIME = 10
+PLANET_PROGRESSION = {"Earth": "Moon", "Moon": "Mars", "Mars": "Jupiter", "Jupiter": "Earth"}
 
-PLANET_PROGRESSION = {"Earth": "Moon", "Moon": "Mars", "Mars": "Upiter", "Upiter": "Earth"}
 RES_NAMES = {
     "res_iron": "Залізо", "res_fuel": "Паливо", "res_regolith": "Реголіт",
     "res_he3": "Гелій-3", "res_silicon": "Кремній", "res_oxide": "Оксид",
@@ -27,10 +26,8 @@ async def show_missions(message: types.Message):
         await message.answer("Спочатку вступи в сім'ю!", reply_markup=get_main_kb_no_family())
         return
 
-    # 1. ПЕРЕВІРКА ТАЙМЕРА
+    # Перевірка таймера
     timers = db.get_timers(family_id)
-    # 0=end_time, 1=launch_id, 2=mission_id
-
     if timers[0]:
         try:
             end_time = datetime.strptime(timers[0], "%Y-%m-%d %H:%M:%S.%f")
@@ -38,24 +35,15 @@ async def show_missions(message: types.Message):
             end_time = datetime.strptime(timers[0], "%Y-%m-%d %H:%M:%S")
 
         if datetime.now() < end_time:
-            # Ще летить
             remaining = end_time - datetime.now()
             mins = int(remaining.total_seconds() // 60)
-            secs = int(remaining.total_seconds() % 60)
-            await message.answer(
-                f"🚀 **РАКЕТА В ПОЛЬОТІ!**\n\n"
-                f"Триває виконання місії.\n"
-                f"⏳ До прибуття: **{mins} хв {secs} с**\n"
-                f"Очікуйте завершення маневру."
-            )
+            await message.answer(f"🚀 **РАКЕТА В ПОЛЬОТІ!**\nДо прибуття: {mins} хв.")
             return
         else:
-            # Прилетів! Рахуємо результат
             await process_mission_result(message, family_id, timers[2], timers[1])
             db.clear_mission_timer(family_id)
             return
 
-    # 2. ЯКЩО НЕ ЛЕТИТЬ - ПОКАЗУЄМО МЕНЮ
     fam_info = db.get_family_info(family_id)
     current_planet = fam_info[5]
     missions = db.get_missions_by_planet(current_planet)
@@ -66,54 +54,53 @@ async def show_missions(message: types.Message):
 
     builder = InlineKeyboardBuilder()
     for m in missions:
+        # m[0]=id, m[1]=name, m[2]=desc, m[3]=reward, m[4]=is_boss, m[5]=cost
         cost = m[5]
         reward = m[3]
         icon = "👑" if m[4] else "🚀"
+        # ВИПРАВЛЕНО ТУТ (було m[7], стало m[5] або змінна cost)
         builder.button(text=f"{icon} {m[1]} (-{cost} | +{reward})", callback_data=f"select_mission:{m[0]}")
     builder.adjust(1)
 
-    emoji = {"Earth": "🌍", "Moon": "🌑", "Mars": "🔴", "Upiter": "⚡"}.get(current_planet, "🌌")
-    await message.answer(f"{emoji} **Центр польотів: {current_planet}**\nЧас місії: {FLIGHT_TIME} хв.",
+    emoji = {"Earth": "🌍", "Moon": "🌑", "Mars": "🔴", "Jupiter": "⚡"}.get(current_planet, "🌌")
+    await message.answer(f"{emoji} **Орбіта: {current_planet}**\nЧас польоту: {FLIGHT_TIME} хв.",
                          reply_markup=builder.as_markup(), parse_mode="Markdown")
 
 
 async def process_mission_result(message, family_id, mission_id, launch_id):
     mission = db.get_mission_by_id(mission_id)
-
-    # Шанс успіху (можна додати рандом)
-    success = random.randint(1, 100) <= 85  # 85% успіху
-
-    if success:
+    # Шанс успіху 85%
+    if random.randint(1, 100) <= 85:
         db.update_launch_status(launch_id, "success")
-        db.update_balance(family_id, mission[4])
-        msg = f"✅ **МІСІЯ ЗАВЕРШЕНА УСПІШНО!**\n\nЕкіпаж повернувся.\nНагорода: 💰{mission[4]}"
-
+        db.update_balance(family_id, mission[4])  # reward
+        msg = f"✅ **МІСІЯ УСПІШНА!**\n+💰{mission[4]}"
         if mission[6]:  # Boss
             next_p = PLANET_PROGRESSION.get(mission[5])
             if next_p:
                 db.move_family_to_planet(family_id, next_p)
-                msg += f"\n\n🌌 **ПЕРЕЛІТ ЗДІЙСНЕНО!**\nНова база: **{next_p}**"
-
+                msg += f"\n🌌 **ПЕРЕЛІТ НА {next_p}!**"
         await message.answer(msg, parse_mode="Markdown")
     else:
         db.update_launch_status(launch_id, "failed")
-        await message.answer("💥 **АВАРІЯ ПРИ ПОСАДЦІ!**\nМісія провалена. Ресурси втрачено.", parse_mode="Markdown")
+        await message.answer("💥 **АВАРІЯ!** Ресурси втрачено.", parse_mode="Markdown")
 
 
-# --- ЛОГІКА СТАРТУ ---
 @router.callback_query(F.data.startswith("select_mission:"))
 async def start_protocol(callback: types.CallbackQuery):
     mission_id = int(callback.data.split(":")[1])
     family_id = db.get_user_family(callback.from_user.id)
-    mission = db.get_mission_by_id(mission_id)
 
-    # Перевірка ресурсів
+    # Тут використовуємо get_mission_by_id, який повертає SELECT *, тому індекси інші
+    mission = db.get_mission_by_id(mission_id)
+    # mission: 0=id, ..., 7=cost, 8=req_name, 9=req_amt
+
     res = db.get_family_resources(family_id)
+
+    # Перевірка грошей (mission[7] це cost_money у SELECT *)
     if res[0] < mission[7]:
-        await callback.answer("❌ Брак грошей!", show_alert=True)
+        await callback.answer("❌ Брак коштів!", show_alert=True)
         return
 
-    # Ресурси
     req_name = mission[8]
     req_amt = mission[9]
     if req_name and req_amt > 0:
@@ -121,17 +108,15 @@ async def start_protocol(callback: types.CallbackQuery):
                    "res_hydrogen": 7, "res_helium": 8}
         idx = res_idx.get(req_name)
         if res[idx] < req_amt:
-            await callback.answer(f"❌ Брак ресурсу: {RES_NAMES.get(req_name)}!", show_alert=True)
+            await callback.answer(f"❌ Брак ресурсу!", show_alert=True)
             return
 
-    # Бронь
     launch_id = db.start_launch(family_id, mission_id)
     db.deduct_resources(family_id, mission[7], req_name, req_amt)
 
     builder = InlineKeyboardBuilder()
-    builder.button(text="✅ ГОТОВИЙ ДО ЗАПУСКУ", callback_data=f"confirm_launch:{launch_id}")
-    await callback.message.answer(f"🚨 **ПІДГОТОВКА**\nВитрачено: 💰{mission[7]}.\nПотрібна згода екіпажу.",
-                                  reply_markup=builder.as_markup())
+    builder.button(text="✅ ПІДТВЕРДИТИ", callback_data=f"confirm_launch:{launch_id}")
+    await callback.message.answer(f"🚨 **ПІДГОТОВКА**\nВитрати списано. Всі готові?", reply_markup=builder.as_markup())
     await callback.answer()
 
 
@@ -148,15 +133,11 @@ async def confirm_launch(callback: types.CallbackQuery):
         await callback.answer("Вже підтверджено!")
         return
 
-    await callback.message.edit_text(f"⚙️ Готовність: {current}/{total}\n{'🟩' * current}{'⬜' * (total - current)}")
+    await callback.message.edit_text(f"⚙️ Готовність: {current}/{total}\n{'🟩' * current}")
 
     if current >= total:
         conn = db.connection
         cur = conn.cursor()
         m_id = cur.execute("SELECT mission_id FROM launches WHERE id = ?", (launch_id,)).fetchone()[0]
-
-        # ЗАПУСК ТАЙМЕРА
         db.set_mission_timer(family_id, FLIGHT_TIME, launch_id, m_id)
-
-        await callback.message.answer(
-            f"🔥 **ПУСК!**\nРакета вийшла на орбіту.\nРозрахунковий час польоту: {FLIGHT_TIME} хв.")
+        await callback.message.answer(f"🔥 **ПУСК!** Час польоту: {FLIGHT_TIME} хв.")

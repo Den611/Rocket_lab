@@ -3,7 +3,6 @@ import random
 import string
 import datetime
 
-
 class Database:
     def __init__(self, db_file):
         self.connection = sqlite3.connect(db_file)
@@ -37,12 +36,11 @@ class Database:
                 mine_lvl INTEGER DEFAULT 0,
                 last_collection DATETIME DEFAULT CURRENT_TIMESTAMP,
 
-                -- ТАЙМЕРИ (НОВЕ)
-                mission_end_time DATETIME DEFAULT NULL,   -- Коли сяде ракета
-                active_launch_id INTEGER DEFAULT NULL,    -- Який запуск летить
-                active_mission_id INTEGER DEFAULT NULL,   -- ID місії
-
-                upgrade_end_time DATETIME DEFAULT NULL    -- Коли добудується завод
+                -- ТАЙМЕРИ
+                mission_end_time DATETIME DEFAULT NULL,   
+                active_launch_id INTEGER DEFAULT NULL,    
+                active_mission_id INTEGER DEFAULT NULL,   
+                upgrade_end_time DATETIME DEFAULT NULL    
             )
         """)
         # 2. Користувачі
@@ -85,11 +83,34 @@ class Database:
         """)
         self.connection.commit()
 
-    # --- ТАЙМЕРИ ---
+    # --- МЕТОДИ ДЛЯ AUTOCHECK (Додано) ---
+    def get_expired_missions(self):
+        """Знаходить сім'ї, у яких час місії вже вийшов"""
+        with self.connection:
+            return self.cursor.execute("""
+                SELECT id, active_mission_id, active_launch_id, current_planet 
+                FROM families 
+                WHERE mission_end_time <= CURRENT_TIMESTAMP AND mission_end_time IS NOT NULL
+            """).fetchall()
 
+    def get_expired_upgrades(self):
+        """Знаходить сім'ї, у яких час будівництва вже вийшов"""
+        with self.connection:
+            return self.cursor.execute("""
+                SELECT id, current_planet, mine_lvl 
+                FROM families 
+                WHERE upgrade_end_time <= CURRENT_TIMESTAMP AND upgrade_end_time IS NOT NULL
+            """).fetchall()
+
+    def get_family_user_ids(self, family_id):
+        """Отримує ID всіх користувачів сім'ї для розсилки"""
+        with self.connection:
+            result = self.cursor.execute("SELECT user_id FROM users WHERE family_id = ?", (family_id,)).fetchall()
+            return [row[0] for row in result]
+
+    # --- ТАЙМЕРИ ---
     def get_timers(self, family_id):
         with self.connection:
-            # Повертає: mission_end, active_launch, active_mission, upgrade_end
             return self.cursor.execute(
                 "SELECT mission_end_time, active_launch_id, active_mission_id, upgrade_end_time FROM families WHERE id = ?",
                 (family_id,)).fetchone()
@@ -114,28 +135,23 @@ class Database:
 
     def finish_upgrade(self, family_id):
         with self.connection:
-            # ВАЖЛИВО: Оновлюємо last_collection, щоб не було багу з накруткою ресурсів за час будівництва
             self.cursor.execute(
                 "UPDATE families SET mine_lvl = mine_lvl + 1, last_collection = CURRENT_TIMESTAMP, upgrade_end_time = NULL WHERE id = ?",
                 (family_id,))
 
-    # --- АДМІН ФУНКЦІЇ (ЧІТИ) ---
-
+    # --- АДМІН ФУНКЦІЇ ---
     def admin_skip_timers(self, family_id):
         with self.connection:
             past_time = datetime.datetime.now() - datetime.timedelta(minutes=1)
-            # Завершуємо місії
             self.cursor.execute(
                 "UPDATE families SET mission_end_time = ? WHERE id = ? AND mission_end_time IS NOT NULL",
                 (past_time, family_id))
-            # Завершуємо будівництво
             self.cursor.execute(
                 "UPDATE families SET upgrade_end_time = ? WHERE id = ? AND upgrade_end_time IS NOT NULL",
                 (past_time, family_id))
 
     def admin_add_resources(self, family_id):
         with self.connection:
-            # Додаємо купу всього
             self.cursor.execute("""
                 UPDATE families SET 
                 balance = balance + 50000,
