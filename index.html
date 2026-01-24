@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AERO-X | Heavy Launch System</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="CSS/main.css">
+    <link rel="stylesheet" href="CSS/Earth.css">
 </head>
 <body>
-    
+
     <div id="space-container"></div>
     
     <header>
@@ -18,7 +18,7 @@
         </div>
         <div class="status-badge">
             <div class="status-dot"></div>
-            INVENTORY
+            ІНВЕНТАР
         </div>
     </header>
 
@@ -29,8 +29,8 @@
         </div>
 
         <div class="planet-item">
-            <img src="images/Mercuri.png" alt="MERCURY">
-            <span class="planet-name">MERCURY</span>
+            <img src="images/Moon.png" alt="MOON">
+            <span class="planet-name">MOON</span>
         </div>
 
         <div class="planet-item">
@@ -39,7 +39,7 @@
         </div>
 
         <div class="planet-item">
-            <img src="images/Upiter.png" alt="JUPITER">
+            <img src="images/Jupiter.png" alt="JUPITER">
             <span class="planet-name">JUPITER</span>
         </div>
     </div>
@@ -47,38 +47,29 @@
 
     <main class="hero-container">
         
-        <div class="resources-panel">
-            <div class="res-header">SUPPLY MONITOR</div>
+      <div class="resources-panel">
+            <div class="res-header">РЕСУРСИ</div>
             
             <div class="res-item">
-                <span class="res-icon">⚡</span>
+                <span class="res-icon">🔩</span>
                 <div class="res-data">
-                    <span class="res-name">Energy</span>
-                    <span class="res-value" id="resEnergy">100%</span>
+                    <span class="res-name">Залізо <span class="planet-tag earth">EARTH</span></span>
+                    <span class="res-value">100%</span>
                 </div>
             </div>
 
             <div class="res-item">
                 <span class="res-icon">⛽</span>
                 <div class="res-data">
-                    <span class="res-name">Liquid H2</span>
-                    <span class="res-value" id="resFuel">98%</span>
+                    <span class="res-name">Паливо <span class="planet-tag earth">EARTH</span></span>
+                    <span class="res-value">98%</span>
                 </div>
             </div>
-
             <div class="res-item">
-                <span class="res-icon">🫧</span>
+                <span class="res-icon">🪙</span>
                 <div class="res-data">
-                    <span class="res-name">Oxygen</span>
-                    <span class="res-value" id="resOxygen">100%</span>
-                </div>
-            </div>
-
-            <div class="res-item">
-                <span class="res-icon">💎</span>
-                <div class="res-data">
-                    <span class="res-name">Credits</span>
-                    <span class="res-value" id="resCredits">4,250 M</span>
+                    <span class="res-name">Спейскоіни <span class="planet-tag earth">EARTH</span></span>
+                    <span class="res-value">10000</span>
                 </div>
             </div>
         </div>
@@ -88,16 +79,16 @@
                 
                 <div class="module r-nose" data-module="nose"></div>
                 
-                <div class="module r-cabin" data-module="cabin">
+                <div class="module r-cabin" data-module="cabin" style="display: none;">
                     <div class="window"></div>
                 </div>
 
-                <div class="module r-cargo" data-module="cargo">
+                <div class="module r-cargo" data-module="cargo" style="display: none;">
                     <div class="cargo-door"></div>
                     <span class="tech-label">PAYLOAD</span>
                 </div>
                 
-                <div class="solar-array">
+                <div class="solar-array" style="display: none;">
                     <div class="module solar-left" data-module="solar"></div>
                     <div class="module solar-right" data-module="solar"></div>
                 </div>
@@ -105,7 +96,7 @@
                 <div class="module r-body" data-module="body">
                     <span class="logo-print">HEAVY-X</span>
                     
-                    <div class="boosters-container">
+                    <div class="boosters-container" style="display: none;">
                         <div class="module booster left-booster" data-module="booster">
                             <div class="booster-flame"></div>
                         </div>
@@ -114,7 +105,7 @@
                         </div>
                     </div>
 
-                    <div class="r-fins">
+                    <div class="r-fins" style="display: none;">
                         <div class="module fin-left" data-module="fins"></div>
                         <div class="module fin-right" data-module="fins"></div>
                     </div>
@@ -123,6 +114,7 @@
                 <div class="module r-engine" data-module="engine"></div>
                 <div class="flame main-flame"></div>
             </div>
+
             <div class="tech-tree-container">
                 <button class="tech-tree-btn">
                     <span class="btn-scan-line"></span>
@@ -153,6 +145,6 @@
     </main>
     
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="JS/script.js"></script>
+    <script src="JS/Earth.js"></script>
 </body>
 </html>

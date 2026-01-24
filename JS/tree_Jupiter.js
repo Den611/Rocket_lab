@@ -8,55 +8,80 @@ let isDragging = false;
 let startX, startY;
 const NODE_WIDTH = 150;
 const NODE_HEIGHT = 145;
-// --- 1. ОНОВЛЕНІ КООРДИНАТИ (Рівні лінії) ---
-// Базова точка X=1000, Y=1000. Крок по X = 250px, Крок по Y = 200px
+
 const treeNodes = [
-    // --- РЯДОК 1: Конус-верхівка ---
+    // === ГРУПА 1: ВЕРХНЯ (Асиметрична) ===
+    // 1. Старт
     { 
-        id: 'gu1', name: 'Конус-верхівка', tier: 'I', desc: 'Аеродинамічний обтікач для зниження опору повітря під час зльоту.', 
+        id: 'g1_start', name: 'Core Module', tier: 'I', desc: 'Ядро.', 
         x: 1000, y: 1000, 
         req: null, owned: true, img: 'images/modules/nose.png' 
     },
+    // 2. Лінійне продовження (Точка розвилки)
     { 
-        id: 'gu2', name: 'Сенсорний шпиль', tier: 'II', desc: 'Модернізована верхівка з датчиками атмосфери та телеметрією.', 
+        id: 'g1_split', name: 'Processing', tier: 'II', desc: 'Процесор.', 
         x: 1250, y: 1000, 
-        req: 'gu1', owned: false, img: 'images/modules/ai.png' 
+        req: 'g1_start', owned: false, img: 'images/modules/ai.png' 
+    },
+    
+    // --- ВЕРХНЯ ГІЛКА (2 блоки) ---
+    { 
+        id: 'g1_up1', name: 'Logic Unit', tier: 'III', desc: 'Логіка.', 
+        x: 1500, y: 900, // Вгору
+        req: 'g1_split', owned: false, img: 'images/modules/quantum.png' 
+    },
+    { 
+        id: 'g1_up2', name: 'Adv. AI', tier: 'IV', desc: 'Вищий ШІ.', 
+        x: 1750, y: 900, // Вправо
+        req: 'g1_up1', owned: false, img: 'images/modules/ai.png' 
     },
 
-    // --- РЯДОК 2: Корпус ---
+    // --- НИЖНЯ ГІЛКА (3 блоки - довша) ---
     { 
-        id: 'nc1', name: 'Корпус', tier: 'I', desc: 'Стандартна алюмінієва оболонка для паливних баків.', 
-        x: 1000, y: 1200, 
-        req: null, owned: true, img: 'images/modules/body.png' 
+        id: 'g1_down1', name: 'Hull Plating', tier: 'III', desc: 'Обшивка.', 
+        x: 1500, y: 1100, // Вниз
+        req: 'g1_split', owned: false, img: 'images/modules/body.png' 
     },
     { 
-        id: 'h1', name: 'Титановий каркас', tier: 'II', desc: 'Посилена конструкція, що витримує перевантаження до 15G.', 
-        x: 1250, y: 1200, 
-        req: 'nc1', owned: false, img: 'images/modules/fairing.png' 
+        id: 'g1_down2', name: 'Armor Layer', tier: 'IV', desc: 'Броня.', 
+        x: 1750, y: 1100, // Вправо
+        req: 'g1_down1', owned: false, img: 'images/modules/shield.png' 
+    },
+    { 
+        id: 'g1_down3', name: 'Kinetic Shield', tier: 'V', desc: 'Кінетичний щит.', 
+        x: 2000, y: 1100, // Ще правіше (найдовша гілка)
+        req: 'g1_down2', owned: false, img: 'images/modules/shield.png' 
     },
 
-    // --- РЯДОК 3: Турбіна ---
+
+    // === ГРУПА 2: СЕРЕДНЯ (Коротка розвилка) ===
     { 
-        id: 'e1', name: 'Турбіна', tier: 'I', desc: 'Базовий насос для подачі паливної суміші в камеру згоряння.', 
-        x: 1000, y: 1400, 
+        id: 'g2_start', name: 'Engine Tech', tier: 'I', desc: 'Двигуни.', 
+        x: 1000, y: 1450, 
         req: null, owned: true, img: 'images/modules/engine.png' 
     },
     { 
-        id: 'e2', name: 'Турбо-нагнітач', tier: 'II', desc: 'Подвійна система нагнітання для максимальної тяги двигуна.', 
-        x: 1250, y: 1400, 
-        req: 'e1', owned: false, img: 'images/modules/booster.png' 
+        id: 'g2_up', name: 'Ion Thruster', tier: 'II', desc: 'Іон.', 
+        x: 1250, y: 1350, // Вгору
+        req: 'g2_start', owned: false, img: 'images/modules/booster.png' 
+    },
+    { 
+        id: 'g2_down', name: 'Plasma Drive', tier: 'II', desc: 'Плазма.', 
+        x: 1250, y: 1550, // Вниз
+        req: 'g2_start', owned: false, img: 'images/modules/quantum.png' 
     },
 
-    // --- РЯДОК 4: Надкрилки ---
-    {
-        id: 'a1', name: 'Надкрилки', tier: 'I', desc: 'Пасивні стабілізатори для стійкості ракети в польоті.',
-        x: 1000, y: 1600,
-        req: null, owned: true, img: 'images/modules/shield.png'
+
+    // === ГРУПА 3: НИЖНЯ (Проста лінія) ===
+    { 
+        id: 'g3_start', name: 'Life Support', tier: 'I', desc: 'Кисень.', 
+        x: 1000, y: 1800, 
+        req: null, owned: true, img: 'images/modules/fairing.png' 
     },
-    {
-        id: 'a2', name: 'Активні закрилки', tier: 'II', desc: 'Рухомі елементи крил для точного маневрування при посадці.',
-        x: 1250, y: 1600,
-        req: 'a1', owned: false, img: 'images/modules/quantum.png'
+    { 
+        id: 'g3_end', name: 'Cryo Stasis', tier: 'II', desc: 'Кріо.', 
+        x: 1250, y: 1800, 
+        req: 'g3_start', owned: false, img: 'images/modules/body.png' 
     }
 ];
 
@@ -127,21 +152,20 @@ function init() {
 
 // --- ФУНКЦІЯ ЦЕНТРУВАННЯ ---
 function centerViewport() {
-    // Знаходимо приблизний центр нашого дерева
-    // По X: від 1000 до 1500 -> центр 1250
-    // По Y: від 1000 до 1400 -> центр 1200
-    const treeCenterX = 1250; 
-    const treeCenterY = 1200;
+    // Дерево тепер простягається по Y від 1000 до 1900.
+    // Середина дерева по Y ~ 1500
+    // Середина по X ~ 1300
+    const treeCenterX = 1300; 
+    const treeCenterY = 1500;
 
     // Центр екрану користувача
     const screenCenterX = window.innerWidth / 2;
     const screenCenterY = window.innerHeight / 2;
 
-    // Зсув = Центр Екрану - Центр Дерева
+    // Зсув
     currentX = screenCenterX - treeCenterX;
     currentY = screenCenterY - treeCenterY;
 
-    // Застосовуємо
     updateCanvasPosition();
 }
 
