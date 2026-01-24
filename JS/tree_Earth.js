@@ -11,63 +11,52 @@ const NODE_HEIGHT = 145;
 // --- 1. ОНОВЛЕНІ КООРДИНАТИ (Рівні лінії) ---
 // Базова точка X=1000, Y=1000. Крок по X = 250px, Крок по Y = 200px
 const treeNodes = [
-    // --- РЯДОК 1: Керування ---
+    // --- РЯДОК 1: Конус-верхівка ---
     { 
-        id: 'gu1', name: 'Heavy-X Control', tier: 'I', desc: 'Блок керування.', 
+        id: 'gu1', name: 'Конус-верхівка', tier: 'I', desc: 'Аеродинамічний обтікач для зниження опору повітря під час зльоту.', 
         x: 1000, y: 1000, 
         req: null, owned: true, img: 'images/modules/nose.png' 
     },
     { 
-        id: 'gu2', name: 'AI Neuro-Pilot', tier: 'II', desc: 'Авто-пілот.', 
-        x: 1250, y: 1000, // Прямо праворуч
+        id: 'gu2', name: 'Сенсорний шпиль', tier: 'II', desc: 'Модернізована верхівка з датчиками атмосфери та телеметрією.', 
+        x: 1250, y: 1000, 
         req: 'gu1', owned: false, img: 'images/modules/ai.png' 
     },
 
-    // --- РЯДОК 2: Корпус і захист ---
+    // --- РЯДОК 2: Корпус ---
     { 
-        id: 'nc1', name: 'Payload Shell', tier: 'I', desc: 'Обтікач.', 
+        id: 'nc1', name: 'Корпус', tier: 'I', desc: 'Стандартна алюмінієва оболонка для паливних баків.', 
         x: 1000, y: 1200, 
-        req: null, owned: true, img: 'images/modules/fairing.png' 
+        req: null, owned: true, img: 'images/modules/body.png' 
     },
     { 
-        id: 'h1', name: 'Heavy-X Frame', tier: 'II', desc: 'Титановий корпус.', 
-        x: 1250, y: 1200, // Прямо праворуч
-        req: 'nc1', owned: false, img: 'images/modules/body.png' 
+        id: 'h1', name: 'Титановий каркас', tier: 'II', desc: 'Посилена конструкція, що витримує перевантаження до 15G.', 
+        x: 1250, y: 1200, 
+        req: 'nc1', owned: false, img: 'images/modules/fairing.png' 
     },
 
-    // --- РЯДОК 3: Двигуни ---
+    // --- РЯДОК 3: Турбіна ---
     { 
-        id: 'e1', name: 'Chemical Engine', tier: 'I', desc: 'Двигун.', 
+        id: 'e1', name: 'Турбіна', tier: 'I', desc: 'Базовий насос для подачі паливної суміші в камеру згоряння.', 
         x: 1000, y: 1400, 
         req: null, owned: true, img: 'images/modules/engine.png' 
     },
     { 
-        id: 'e2', name: 'Dual Boosters', tier: 'II', desc: 'Прискорювачі.', 
-        x: 1250, y: 1400, // Прямо праворуч
+        id: 'e2', name: 'Турбо-нагнітач', tier: 'II', desc: 'Подвійна система нагнітання для максимальної тяги двигуна.', 
+        x: 1250, y: 1400, 
         req: 'e1', owned: false, img: 'images/modules/booster.png' 
     },
 
+    // --- РЯДОК 4: Надкрилки ---
     {
-        id: 'a1',
-        name: 'Thermal Shielding',
-        tier: 'I',
-        desc: 'Захист від перегріву.',
-        x: 1000,
-        y: 1600,
-        req: null,
-        owned: true,
-        img: 'images/modules/shield.png'
+        id: 'a1', name: 'Надкрилки', tier: 'I', desc: 'Пасивні стабілізатори для стійкості ракети в польоті.',
+        x: 1000, y: 1600,
+        req: null, owned: true, img: 'images/modules/shield.png'
     },
     {
-        id: 'a2',
-        name: 'Quantum Telemetry',
-        tier: 'II',
-        desc: 'Розширена телеметрія.',
-        x: 1250,
-        y: 1600,
-        req: 'a1',
-        owned: false,
-        img: 'images/modules/quantum.png'
+        id: 'a2', name: 'Активні закрилки', tier: 'II', desc: 'Рухомі елементи крил для точного маневрування при посадці.',
+        x: 1250, y: 1600,
+        req: 'a1', owned: false, img: 'images/modules/quantum.png'
     }
 ];
 
