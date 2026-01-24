@@ -6,7 +6,8 @@ let currentX = 0;
 let currentY = 0; 
 let isDragging = false;
 let startX, startY;
-
+const NODE_WIDTH = 150;
+const NODE_HEIGHT = 145;
 // --- 1. ОНОВЛЕНІ КООРДИНАТИ (Рівні лінії) ---
 // Базова точка X=1000, Y=1000. Крок по X = 250px, Крок по Y = 200px
 const treeNodes = [
@@ -17,7 +18,7 @@ const treeNodes = [
         req: null, owned: true, img: 'images/modules/nose.png' 
     },
     { 
-        id: 'gu2', name: 'AI Neuro-Pilot', tier: 'V', desc: 'Авто-пілот.', 
+        id: 'gu2', name: 'AI Neuro-Pilot', tier: 'II', desc: 'Авто-пілот.', 
         x: 1250, y: 1000, // Прямо праворуч
         req: 'gu1', owned: false, img: 'images/modules/ai.png' 
     },
@@ -29,14 +30,9 @@ const treeNodes = [
         req: null, owned: true, img: 'images/modules/fairing.png' 
     },
     { 
-        id: 'h1', name: 'Heavy-X Frame', tier: 'III', desc: 'Титановий корпус.', 
+        id: 'h1', name: 'Heavy-X Frame', tier: 'II', desc: 'Титановий корпус.', 
         x: 1250, y: 1200, // Прямо праворуч
         req: 'nc1', owned: false, img: 'images/modules/body.png' 
-    },
-    { 
-        id: 'p1', name: 'Solar Arrays', tier: 'II', desc: 'Сонячні панелі.', 
-        x: 1500, y: 1200, // Прямо праворуч від корпусу
-        req: 'h1', owned: false, img: 'images/modules/solar.png' 
     },
 
     // --- РЯДОК 3: Двигуни ---
@@ -46,14 +42,32 @@ const treeNodes = [
         req: null, owned: true, img: 'images/modules/engine.png' 
     },
     { 
-        id: 'e2', name: 'Dual Boosters', tier: 'IV', desc: 'Прискорювачі.', 
+        id: 'e2', name: 'Dual Boosters', tier: 'II', desc: 'Прискорювачі.', 
         x: 1250, y: 1400, // Прямо праворуч
         req: 'e1', owned: false, img: 'images/modules/booster.png' 
     },
-    { 
-        id: 'p2', name: 'Active Fins', tier: 'IV', desc: 'Рулі.', 
-        x: 1500, y: 1400, // Прямо праворуч від бустерів
-        req: 'e2', owned: false, img: 'images/modules/fins.png' 
+
+    {
+        id: 'a1',
+        name: 'Thermal Shielding',
+        tier: 'I',
+        desc: 'Захист від перегріву.',
+        x: 1000,
+        y: 1600,
+        req: null,
+        owned: true,
+        img: 'images/modules/shield.png'
+    },
+    {
+        id: 'a2',
+        name: 'Quantum Telemetry',
+        tier: 'II',
+        desc: 'Розширена телеметрія.',
+        x: 1250,
+        y: 1600,
+        req: 'a1',
+        owned: false,
+        img: 'images/modules/quantum.png'
     }
 ];
 
@@ -150,25 +164,23 @@ function drawLine(node) {
     line.className = 'line';
     line.id = `line-${node.id}`;
 
-    // Розмір ноди тепер 150x145
-    // Центр ноди: X + 75, Y + 72.5
-    const startX = parent.x + 75; 
-    const startY = parent.y + 72; 
-    const endX = node.x + 75;     
-    const endY = node.y + 72;     
+    // 🔹 START — права сторона батька
+    const startX = parent.x + NODE_WIDTH;
+    const startY = parent.y + NODE_HEIGHT / 2;
+
+    // 🔹 END — ліва сторона дитини
+    const endX = node.x;
+    const endY = node.y + NODE_HEIGHT / 2;
 
     const dx = endX - startX;
     const dy = endY - startY;
-    const dist = Math.sqrt(dx*dx + dy*dy);
+    const dist = Math.sqrt(dx * dx + dy * dy);
 
-    // Корекція лінії, щоб вона не перекривала ноди (відступ по 75px з кожного боку)
-    // Але оскільки вони стоять в ряд, можна малювати від центру до центру і сховати лінію під нодами (z-index)
-    
     line.style.width = dist + 'px';
     line.style.left = startX + 'px';
     line.style.top = startY + 'px';
     line.style.transform = `rotate(${Math.atan2(dy, dx)}rad)`;
-    
+
     canvas.appendChild(line);
 }
 
@@ -188,6 +200,24 @@ function openPanel(node) {
     document.getElementById('node-name').innerText = node.name;
     document.getElementById('node-tier').innerText = `TIER ${node.tier}`;
     document.getElementById('node-desc').innerText = node.desc;
+
+    // 🖼 Картинка модуля
+    const img = document.getElementById('node-image');
+    img.src = node.img || 'images/modules/placeholder.png';
+
+    // 🔘 Кнопка дослідження
+    const btn = document.querySelector('.action-btn');
+
+    if (node.owned) {
+        btn.textContent = 'ДОСЛІДЖЕНО';
+        btn.classList.add('disabled');
+        btn.disabled = true;
+    } else {
+        btn.textContent = 'ДОСЛІДИТИ';
+        btn.classList.remove('disabled');
+        btn.disabled = false;
+    }
+
     document.getElementById('info-panel').classList.add('active');
 }
 

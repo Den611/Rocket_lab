@@ -9,6 +9,181 @@ if (tg.initDataUnsafe.user) {
     }
 }
 
+const rocketState = {
+    nose: 1,     // є
+    body: 1,     // є
+    engine: 1,   // маленька турбіна
+    cabin: 0,
+    cargo: 0,
+    solar: 0,
+    fins: 0,
+    booster: 0
+};
+
+// Змінна, що пам'ятає, який модуль зараз вибрано
+let selectedModuleKey = null;
+
+document.addEventListener("DOMContentLoaded", () => {
+    initHyperSpace();
+    initInteractions();
+    initNavigation();
+    updateRocketVisuals(); // Малюємо ракету при старті
+});
+
+// --- ОНОВЛЕННЯ ГРАФІКИ (CSS КЛАСИ) ---
+function updateRocketVisuals() {
+    // Проходимо по кожному модулю в нашому стані
+    for (const [key, level] of Object.entries(rocketState)) {
+        // Знаходимо елементи (деякі модулі мають по 2 деталі, як fins або boosters)
+        // Використовуємо селектор атрибута, щоб знайти всі частини
+        const elements = document.querySelectorAll(`[data-module="${key}"]`);
+        
+        elements.forEach(el => {
+            // Очищаємо старі класи рівнів
+            el.classList.remove('tier-0', 'tier-1', 'tier-2');
+            
+            // Додаємо актуальний клас
+            el.classList.add(`tier-${level}`);
+            
+            // Якщо це рівень 0 (креслення), показуємо його (в CSS ми зробили його display:flex, але прозорим)
+            // Якщо раніше ми робили display:none, то тепер ми керуємо видимістю через класи tier
+            if (level > 0) {
+               el.style.display = ''; // Скидаємо inline style, якщо був
+            } else {
+               // Для Cargo/Fins/Solar важливо, щоб блок фізично був присутній для кліку,
+               // тому ми прибираємо display:none, який міг бути в старому CSS
+               el.style.display = 'flex'; 
+               if(key === 'fins' || key === 'solar' || key === 'booster') el.style.display = 'block';
+            }
+        });
+    }
+}
+
+// --- ЛОГІКА АПГРЕЙДУ ---
+function upgradeSelectedModule() {
+    if (!selectedModuleKey) return; // Нічого не вибрано
+
+    const currentLevel = rocketState[selectedModuleKey];
+    const btn = document.querySelector('.upgrade-btn');
+    
+    // Максимальний рівень - 2 (можна змінити)
+    if (currentLevel < 2) {
+        // Ефект завантаження
+        const originalText = btn.innerText;
+        btn.innerText = "INSTALLING...";
+        
+        setTimeout(() => {
+            // Підвищуємо рівень
+            rocketState[selectedModuleKey]++;
+            
+            // Оновлюємо вигляд ракети
+            updateRocketVisuals();
+            
+            // Оновлюємо панель інфо (щоб змінилися цифри Integrity/Level)
+            refreshInfoPanel(selectedModuleKey);
+            
+            // Ефект успіху
+            btn.innerText = "COMPLETE!";
+            setTimeout(() => {
+                // Повертаємо текст кнопки залежно від нового рівня
+                updateButtonState(rocketState[selectedModuleKey]); 
+            }, 1000);
+
+        }, 500); // Швидкий апгрейд (0.5 сек)
+    }
+}
+
+// Допоміжна функція оновлення тексту кнопки
+function updateButtonState(level) {
+    const btn = document.querySelector('.upgrade-btn');
+    if (level === 0) {
+        btn.innerText = "BUILD MODULE (1000 $)";
+        btn.style.background = "var(--accent-orange)";
+        btn.style.color = "black";
+        btn.disabled = false;
+    } else if (level === 1) {
+        btn.innerText = "UPGRADE TO MK-2 (5000 $)";
+        btn.style.background = "rgba(0, 243, 255, 0.1)";
+        btn.style.color = "var(--accent-cyan)";
+        btn.disabled = false;
+    } else {
+        btn.innerText = "MAX LEVEL";
+        btn.style.background = "var(--accent-green)";
+        btn.style.color = "black";
+        btn.disabled = true; // Блокуємо кнопку
+    }
+}
+
+// --- ВЗАЄМОДІЯ ---
+function initInteractions() {
+    const modules = document.querySelectorAll('.module');
+    const panel = document.getElementById('infoPanel');
+    const upgradeBtn = document.querySelector('.upgrade-btn');
+
+    // Клік на кнопку апгрейду
+    if(upgradeBtn) {
+        upgradeBtn.addEventListener('click', upgradeSelectedModule);
+    }
+
+    modules.forEach(mod => {
+        mod.addEventListener('mouseenter', () => {
+            const key = mod.getAttribute('data-module');
+            selectedModuleKey = key; // Запам'ятовуємо, що ми зараз дивимось
+            
+            refreshInfoPanel(key);
+            panel.classList.add('active');
+        });
+        
+        // Мобільна адаптація: клік теж вибирає модуль
+        mod.addEventListener('click', () => {
+             selectedModuleKey = mod.getAttribute('data-module');
+             refreshInfoPanel(selectedModuleKey);
+        });
+    });
+}
+
+// Оновлення текстів у правій панелі
+function refreshInfoPanel(key) {
+    const data = modulesData[key]; // Беремо з вашого об'єкту modulesData
+    const level = rocketState[key]; // Поточний рівень (0, 1 або 2)
+    
+    const pTitle = document.getElementById('panelTitle');
+    const pDesc = document.getElementById('panelDesc');
+    const barIntegrity = document.getElementById('barIntegrity');
+    const valIntegrity = document.getElementById('statIntegrity');
+    const barLevel = document.getElementById('barLevel');
+    const levelText = document.getElementById('statLevel');
+    
+    // Змінюємо опис залежно від рівня
+    let displayName = data.title;
+    let displayDesc = data.desc;
+    let integrity = data.integrity;
+    
+    if (level === 0) {
+        displayName += " (Blueprint)";
+        displayDesc = "Module not installed. Purchase required.";
+        integrity = 0;
+    } else if (level === 2) {
+        displayName += " MK-II";
+        displayDesc += " [UPGRADED PERFORMANCE]";
+        integrity = 100;
+    }
+
+    pTitle.innerText = displayName;
+    pDesc.innerText = displayDesc;
+    
+    barIntegrity.style.width = `${integrity}%`;
+    valIntegrity.innerText = `${integrity}%`;
+
+    // Візуалізація рівня
+    const levelPercent = (level / 2) * 100; // 0%, 50%, 100%
+    barLevel.style.width = `${levelPercent}%`;
+    levelText.innerText = level === 0 ? "NONE" : `MK-${level}`;
+
+    // Оновлюємо кнопку
+    updateButtonState(level);
+}
+
 // Єдиний слухач завантаження сторінки
 document.addEventListener("DOMContentLoaded", () => {
     initHyperSpace();
