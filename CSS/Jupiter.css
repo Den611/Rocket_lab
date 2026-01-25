@@ -483,28 +483,256 @@ header {
 .module { cursor: pointer; transition: 0.3s; position: relative; }
 .module:hover { filter: drop-shadow(0 0 10px var(--accent-cyan)) brightness(1.2); z-index: 20; }
 
-/* Форми модулів */
+.r-cannon {
+    position: absolute;
+    /* Опускаємо нижче. Тепер вона візуально кріпиться до верхівки. */
+    top: -50px; 
+    /* Збільшуємо розміри */
+    width: 12px;  /* Було 8px -> стало 12px (товща) */
+    height: 60px; /* Було 25px -> стало 35px (довша) */
+    
+    /* Темно-сірий металевий колір */
+    background: #37474f;
+    border: 2px solid #263238; /* Трохи товстіша рамка */
+    border-bottom: none; /* Знизу рамка не потрібна, бо вона входить в ніс */
+    
+    /* Більш виражене заокруглення зверху */
+    border-radius: 4px 4px 0 0;
+    z-index: 9; /* Трохи менший z-index, щоб ніс її не перекривав */
+    
+    /* Ефект "отвору" дула */
+    box-shadow: inset 0 6px 0 0 #1a2327;
+    /* Текстура металу */
+    background-image: linear-gradient(90deg, transparent 30%, rgba(255,255,255,0.2) 50%, transparent 70%);
+}
 .r-nose { width: 0; height: 0; border-left: 55px solid transparent; border-right: 55px solid transparent; border-bottom: 80px solid #e0e6ed; }
 .r-cabin { width: 110px; height: 80px; background: #d1d9e6; margin-top: -1px; display: flex; justify-content: center; align-items: center; border-right: 3px solid #999; }
 .window { width: 40px; height: 40px; background: #00f3ff; border-radius: 50%; border: 3px solid #333; box-shadow: inset 0 0 10px #000; }
-.r-cargo { width: 110px; height: 60px; background: #788fa5; border-top: 2px solid #555; border-bottom: 2px solid #555; display: flex; justify-content: center; align-items: center; background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.1) 0px, rgba(0,0,0,0.1) 10px, transparent 10px, transparent 20px); }
+
+.r-cargo {
+    width: 110px;
+    height: 100px; /* Було 60px -> стало 100px */
+    background: #788fa5;
+    border-top: 2px solid #555;
+    border-bottom: 2px solid #555;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.1) 0px, rgba(0,0,0,0.1) 10px, transparent 10px, transparent 20px);
+}
 .tech-label { font-size: 0.6rem; color: #fff; background: #333; padding: 2px 4px; }
 .r-body { width: 110px; height: 200px; background: linear-gradient(90deg, #ccc, #fff, #ccc); display: flex; justify-content: center; align-items: center; position: relative; }
 .logo-print { writing-mode: vertical-rl; transform: rotate(180deg); font-family: var(--font-ui); font-weight: bold; color: #222; font-size: 1.2rem; opacity: 0.7; letter-spacing: 3px; }
+.r-service {
+    width: 110px;
+    height: 60px; /* Було 40px -> стало 60px */
+    background: #455a64;
+    border-top: 2px solid #263238;
+    border-bottom: 2px solid #263238;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-image: repeating-linear-gradient(90deg, transparent 0, transparent 10px, rgba(0,0,0,0.3) 10px, rgba(0,0,0,0.3) 12px);
+}
+.tech-label.small {
+    font-size: 0.6rem; /* Трохи більший шрифт */
+    padding: 2px 5px;
+    color: #00f3ff;
+    border: 1px solid #00f3ff;
+    background: rgba(0,0,0,0.5);
+}
+.r-weapons {
+    width: 110px;
+    height: 50px; /* Висота модуля */
+    background: #263238; /* Темний метал */
+    border-top: 2px solid #000;
+    border-bottom: 2px solid #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    /* Текстура "броні" */
+    background-image: repeating-linear-gradient(90deg, transparent 0, transparent 19px, #000 20px);
+    z-index: 5;
+}
 
-/* Сонячні панелі */
-.solar-array { position: absolute; top: 160px; width: 100%; display: flex; justify-content: center; z-index: -2; }
-.solar-left, .solar-right { width: 80px; height: 40px; background: #1a237e; border: 1px solid #4fc3f7; background-image: linear-gradient(#4fc3f7 1px, transparent 1px), linear-gradient(90deg, #4fc3f7 1px, transparent 1px); background-size: 10px 10px; transition: transform 0.5s; }
-.solar-left { transform: translateX(-60px) skewY(10deg); transform-origin: right; }
-.solar-right { transform: translateX(60px) skewY(-10deg); transform-origin: left; }
-.solar-left:hover { transform: translateX(-65px) skewY(0deg); } 
-.solar-right:hover { transform: translateX(65px) skewY(0deg); }
+/* Основа турелі */
+.laser-turret {
+    position: absolute;
+    width: 12px;
+    height: 25px;
+    background: #546e7a;
+    border: 1px solid #78909c;
+    top: 10px; /* Центруємо по вертикалі модуля */
+}
 
+.left-turret {
+    left: -12px; /* Стирчить вліво */
+    border-radius: 5px 0 0 5px;
+    border-right: none;
+}
+
+.right-turret {
+    right: -12px; /* Стирчить вправо */
+    border-radius: 0 5px 5px 0;
+    border-left: none;
+}
+
+/* Ствол лазера */
+.laser-barrel {
+    position: absolute;
+    width: 4px;
+    height: 35px; /* Довжина ствола */
+    background: #333;
+    bottom: 5px; /* Щоб стирчав вгору */
+}
+
+/* Позиція стволів */
+.left-turret .laser-barrel { left: -2px; }
+.right-turret .laser-barrel { right: -2px; }
+
+/* Кінчик лазера (Світіння) */
+.laser-barrel::after {
+    content: '';
+    position: absolute;
+    top: -4px; /* На кінчику */
+    left: 0;
+    width: 4px;
+    height: 6px;
+    background: #ff0055; /* Червоний лазер */
+    box-shadow: 0 0 8px #ff0055, 0 0 15px #ff0055;
+    border-radius: 2px;
+    animation: laserPulse 1s infinite alternate;
+}
+
+@keyframes laserPulse {
+    from { opacity: 0.7; }
+    to { opacity: 1; box-shadow: 0 0 12px #ff0055, 0 0 20px #ff0055; }
+}
+
+/* --- СОНЯЧНІ ПАНЕЛІ (ІНТЕРАКТИВНІ) --- */
+
+.solar-array {
+    position: absolute;
+    top: 320px; 
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    z-index: -2;
+    /* Контейнер пропускає кліки, щоб не заважати... */
+    pointer-events: none; 
+}
+
+.solar-panel {
+    position: absolute;
+    width: 70px;
+    height: 35px;
+    background: #1a237e; /* Темно-синій */
+    border: 1px solid #4fc3f7; /* Блакитна рамка */
+    
+    /* Текстура сітки */
+    background-image: 
+        linear-gradient(#4fc3f7 1px, transparent 1px), 
+        linear-gradient(90deg, #4fc3f7 1px, transparent 1px);
+    background-size: 10px 10px;
+    
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Пружиниста анімація */
+    cursor: pointer;
+    
+    /* ...АЛЕ самі панелі повинні ловити мишку! */
+    pointer-events: all; 
+}
+
+/* === ПОЗИЦІЇ (У стані спокою) === */
+
+/* Верхні (на Payload) */
+.left-upper {
+    transform: translate(-75px, -130px) skewY(10deg);
+    transform-origin: right bottom;
+}
+.right-upper {
+    transform: translate(75px, -130px) skewY(-10deg);
+    transform-origin: left bottom;
+}
+
+/* Нижні (на PWR-Unit) */
+.left-lower {
+    transform: translate(-75px, 10px) skewY(10deg);
+    transform-origin: right top;
+}
+.right-lower {
+    transform: translate(75px, 10px) skewY(-10deg);
+    transform-origin: left top;
+}
+
+/* === ЕФЕКТ ПРИ НАВЕДЕННІ (DEPLOY MODE) === */
+/* Панель від'їжджає далі, вирівнюється (skew 0) і починає світитися */
+
+.left-upper:hover {
+    transform: translate(-95px, -70px) skewY(0deg) scale(1.1);
+    box-shadow: 0 0 15px #00f3ff;
+    z-index: 10;
+    filter: brightness(1.3);
+}
+
+.right-upper:hover {
+    transform: translate(95px, -70px) skewY(0deg) scale(1.1);
+    box-shadow: 0 0 15px #00f3ff;
+    z-index: 10;
+    filter: brightness(1.3);
+}
+
+.left-lower:hover {
+    transform: translate(-95px, 20px) skewY(0deg) scale(1.1);
+    box-shadow: 0 0 15px #00f3ff;
+    z-index: 10;
+    filter: brightness(1.3);
+}
+
+.right-lower:hover {
+    transform: translate(95px, 20px) skewY(0deg) scale(1.1);
+    box-shadow: 0 0 15px #00f3ff;
+    z-index: 10;
+    filter: brightness(1.3);
+}
 /* Бустери */
-.boosters-container { position: absolute; top: 10px; width: 100%; height: 100%; pointer-events: none; }
-.booster { position: absolute; top: 0; width: 35px; height: 190px; background: #546e7a; border-radius: 10px 10px 5px 5px; border-right: 2px solid #37474f; pointer-events: all; box-shadow: 5px 0 10px rgba(0,0,0,0.5); }
-.left-booster { left: -40px; } .right-booster { right: -40px; }
-.booster-flame { position: absolute; bottom: -40px; left: 5px; width: 25px; height: 50px; background: linear-gradient(to bottom, #ff9800, transparent); border-radius: 50%; filter: blur(4px); animation: flameFlicker 0.1s infinite alternate; }
+.boosters-container {
+    position: absolute;
+    top: 5px;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+.booster {
+    position: absolute;
+    top: 0;
+    width: 25px; /* Трохи вужчі, щоб вмістити 4 */
+    height: 180px;
+    background: #546e7a;
+    border-radius: 8px 8px 4px 4px;
+    border: 1px solid #37474f;
+    pointer-events: all; /* Щоб можна було навести мишку */
+    box-shadow: 2px 0 5px rgba(0,0,0,0.5);
+    transition: transform 0.3s;
+}
+.booster-l1 { left: -2px; z-index: 2; background: #455a64; } /* Ліва зовнішня (дальня) */
+.booster-l2 { left: -28px; z-index: 1; }  /* Ліва внутрішня (ближня) */
+
+.booster-r1 { right: -28px; z-index: 1; } /* Права внутрішня (ближня) */
+.booster-r2 { right: -2px; z-index: 2; background: #455a64; } /* Права зовнішня (дальня) */
+
+/* Коригування вогню для бустерів */
+.booster-flame {
+    position: absolute;
+    bottom: -35px;
+    left: 5px;
+    width: 15px;
+    height: 40px;
+    background: linear-gradient(to bottom, #ff9800, transparent);
+    border-radius: 50%;
+    filter: blur(3px);
+    animation: flameFlicker 0.1s infinite alternate;
+}
 
 /* Крила та Двигун */
 .r-fins { position: absolute; bottom: 10px; width: 240px; height: 60px; z-index: -5; }

@@ -96,124 +96,97 @@ body, html {
 .tree-canvas { position: absolute; width: 3000px; height: 3000px; z-index: 1; transition: transform 0.1s ease-out; }
 
 /* Nodes */
-/* --- КВАДРАТНИЙ СТИЛЬ + ГОРИЗОНТАЛЬНЕ РОЗТАШУВАННЯ --- */
-/* --- КВАДРАТНИЙ СТИЛЬ + ГОРИЗОНТАЛЬНЕ РОЗТАШУВАННЯ --- */
-/* --- ФІНАЛЬНИЙ СТИЛЬ: КВАДРАТНА ФОРМА + ГОРИЗОНТАЛЬНА СХЕМА --- */
 .node {
-    position: absolute;
-    width: 210px;
-    height: 85px;
+    position: absolute; 
+    width: 150px;  /* Трохи вужча */
+    height: 145px; /* Значно менша висота (було 180) */
+    
+    background: rgba(1, 15, 30, 0.9);
+    border: 1px solid rgba(0, 242, 255, 0.3);
+    
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    padding: 8px;
     
     clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
-    
-    background: rgba(1, 15, 30, 0.95);
-    
-    box-shadow: 
-        0 0 15px rgba(0, 0, 0, 0.5),
-        inset 0 0 0 1px rgba(0, 242, 255, 0.3);
-
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    padding: 0 10px 0 20px;
+    transition: 0.3s; 
     z-index: 10;
-    cursor: pointer;
-    transition: all 0.3s ease;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
 }
 
-.node:hover {
-    background: rgba(0, 242, 255, 0.1);
-    transform: translateY(-2px);
-    box-shadow: 
-        0 5px 20px rgba(0, 242, 255, 0.2),
-        inset 0 0 0 1px var(--cyan);
+.node:hover { 
+    border-color: var(--cyan); 
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 242, 255, 0.2); 
+    background: rgba(0, 242, 255, 0.1); 
 }
 
 .node.owned {
-    box-shadow: 
-        0 0 15px rgba(0, 255, 157, 0.25),
-        inset 0 0 0 2px #00ff9d,
-        inset 0 0 10px rgba(0, 255, 157, 0.1);
+    border-color: #00ff9d;
+    box-shadow: 0 0 10px rgba(0, 255, 157, 0.1);
 }
 
-.node-text-col {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    flex: 1;
-    min-width: 0;
-}
-
+/* Картинка */
 .node-img-box {
-    position: relative;
-    width: 55px;
-    height: 55px;
-    background: transparent;
-    border: none;
+    width: 100%;
+    height: 60px; /* Зменшено з 80 */
+    background: rgba(255, 255, 255, 0.03);
+    margin-bottom: 5px;
+    border-radius: 3px;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
+    border: 1px dashed rgba(0, 242, 255, 0.15);
 }
 
-.node-icon { 
-    max-width: 75%; 
-    max-height: 75%; 
-    object-fit: contain; 
-    filter: drop-shadow(0 0 2px rgba(0, 242, 255, 0.3)); 
+.node-icon {
+    max-width: 70%;
+    max-height: 70%;
 }
 
+/* Текст */
 .node-tier {
-    font-size: 10px; 
-    color: var(--cyan); 
-    letter-spacing: 1px; 
-    font-weight: bold;
-    margin: 0;
+    font-size: 9px;
+    color: var(--cyan);
+    letter-spacing: 1px;
+    margin-bottom: 2px;
 }
 
 .node-title {
-    font-size: 12px; 
-    font-weight: bold; 
-    color: #fff; 
-    line-height: 1.2;
-    margin: 2px 0 0 0;
-    word-wrap: break-word;
+    font-size: 11px;
+    font-weight: bold;
+    line-height: 1.1;
+    color: #fff;
+    margin-bottom: 0; /* Прибираємо зайвий відступ */
 }
 
-.node-status { 
-    position: absolute; 
-    right: -8px; 
-    bottom: -8px; 
-    z-index: 20; 
-    pointer-events: none; 
+/* Галочка */
+.node-status {
+    width: 100%;
+    height: 18px; /* Фіксована висота для статусу */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: auto; /* Притискає до низу, але не сильно */
 }
 
 .checkmark {
-    font-size: 20px; 
-    color: #00ff9d; 
-    font-weight: bold; 
-    text-shadow: 0 2px 4px rgba(0,0,0,0.8); 
-    filter: drop-shadow(0 0 5px rgba(0, 255, 157, 0.5));
+    color: #00ff9d;
+    font-size: 16px;
+    line-height: 1;
+    text-shadow: 0 0 5px #00ff9d;
 }
 
 .line { 
     position: absolute; 
-    height: 2px; /* Тонка лінія */
-    background: rgba(0, 242, 255, 0.5); /* Напівпрозорий ціан */
-    transform-origin: 0 50%; /* Важливо для правильного повороту */
-    z-index: 5; /* Під нодами */
-    pointer-events: none;
-    box-shadow: 0 0 5px rgba(0, 242, 255, 0.3); /* Легке світіння */
-    transition: all 0.5s ease;
+    height: 2px;
+    background: var(--cyan);
+    opacity: 0.2; transform-origin:
+    left; transition: 0.5s;
+    z-index: 5;
 }
-
-/* Коли лінія підсвічена (активний шлях) */
-.line.highlight { 
-    background: #00f2ff; /* Яскравий колір */
-    opacity: 1; 
-    height: 2px; 
-    box-shadow: 0 0 10px rgba(0, 242, 255, 0.8); 
-}
+.line.highlight { opacity: 1; box-shadow: 0 0 20px var(--cyan); height: 3px; animation: flow 2s infinite linear; }
 
 @keyframes flow { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
 

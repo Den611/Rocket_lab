@@ -30,62 +30,55 @@ body {
 
 /* --- ФОНОВИЙ КОНТЕЙНЕР (КОСМОС) --- */
 #space-container {
-    /* FIXED гарантує, що зорі не рухаються разом зі скролом сторінки */
-    position: fixed; 
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    
-    /* Відправляємо на задній план */
-    z-index: -1; 
-    
-    /* Колір космосу задаємо саме тут */
-    background-color: #05070a;
+    z-index: -1;
     background: radial-gradient(circle at center, #1b2135 0%, #05070a 100%);
-    
-    /* Щоб зорі, які вилітають за межі, не розтягували екран */
-    overflow: hidden; 
+    overflow: hidden;
 }
 
-/* --- ВИГЛЯД ЗІРКИ --- */
+/* --- ЗІРКИ --- */
 .star {
     position: absolute;
     background: white;
     border-radius: 50%;
     opacity: 0.8;
     box-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
-    /* Підключаємо анімацію */
+    /* Важливо: використовуємо анімацію польоту */
     animation: spaceFlight linear infinite;
 }
 
-/* Блакитні зірки */
+/* Блакитні зірки (для середньої дистанції) */
 .star.blue {
     background: #00f3ff;
     box-shadow: 0 0 6px #00f3ff;
 }
 
-/* Далекі туманні зорі */
+/* Туманні далекі зірки (nebula) */
 .star.nebula {
     background: #bd00ff;
     opacity: 0.4;
-    filter: blur(2px);
+    filter: blur(2px); /* Розмиття */
+    box-shadow: 0 0 10px #bd00ff;
 }
 
-/* --- АНІМАЦІЯ ПОЛЬОТУ --- */
+/* --- АНІМАЦІЯ ПОЛЬОТУ (Зверху вниз) --- */
 @keyframes spaceFlight {
     0% {
-        transform: translateY(-10vh); /* Стартуємо трохи вище екрану */
+        transform: translateY(-10vh); /* Починаємо трохи вище екрану */
         opacity: 0;
     }
     10% {
-        opacity: 1; /* Плавно з'являємось */
+        opacity: 1;
     }
     90% {
         opacity: 1;
     }
     100% {
-        transform: translateY(110vh); /* Летимо за низ екрану */
+        transform: translateY(110vh); /* Вилітаємо за низ екрану */
         opacity: 0;
     }
 }
@@ -480,35 +473,11 @@ header {
     padding-bottom: 20px; 
 }
 
-.module { 
-    cursor: pointer; 
-    position: relative; 
-    transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1); /* Плавні зміни форми */
-}
-/* Додаємо плавність для двигуна та вогню окремо */
-.r-engine, .main-flame, .r-nose, .window {
-    transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
-}
+.module { cursor: pointer; transition: 0.3s; position: relative; }
+.module:hover { filter: drop-shadow(0 0 10px var(--accent-cyan)) brightness(1.2); z-index: 20; }
 
 /* Форми модулів */
-.r-nose {
-    width: 0;
-    height: 0;
-    /* Робимо трикутник через прозорі рамки з боків */
-    border-left: 55px solid transparent; 
-    border-right: 55px solid transparent;
-    /* Колір та висота конуса задаються нижньою рамкою */
-    border-bottom: 70px solid #e0e6ed;
-    /* Прибираємо фоновий колір, щоб не було квадрата */
-    background: transparent;
-    /* Трохи заокруглюємо верхівку, щоб це був обтічник, а не гостра піраміда */
-    border-radius: 50% 50% 0 0;
-    
-    /* Центрування */
-    margin: 0 auto;
-    position: relative;
-    z-index: 2;
-}
+.r-nose { width: 0; height: 0; border-left: 55px solid transparent; border-right: 55px solid transparent; border-bottom: 80px solid #e0e6ed; }
 .r-cabin { width: 110px; height: 80px; background: #d1d9e6; margin-top: -1px; display: flex; justify-content: center; align-items: center; border-right: 3px solid #999; }
 .window { width: 40px; height: 40px; background: #00f3ff; border-radius: 50%; border: 3px solid #333; box-shadow: inset 0 0 10px #000; }
 .r-cargo { width: 110px; height: 60px; background: #788fa5; border-top: 2px solid #555; border-bottom: 2px solid #555; display: flex; justify-content: center; align-items: center; background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.1) 0px, rgba(0,0,0,0.1) 10px, transparent 10px, transparent 20px); }
@@ -534,22 +503,7 @@ header {
 .r-fins { position: absolute; bottom: 10px; width: 240px; height: 60px; z-index: -5; }
 .fin-left, .fin-right { position: absolute; width: 0; height: 0; border-bottom: 60px solid #78909c; }
 .fin-left { left: 0; border-left: 60px solid transparent; } .fin-right { right: 0; border-right: 60px solid transparent; }
-.r-engine {
-    /* Ширина має бути меншою за корпус (який 110px) */
-    width: 60px; 
-    height: 40px;
-    background: #333;
-    
-    /* Центруємо двигун під ракетою */
-    margin: 0 auto;
-    
-    /* Робимо форму сопла (звуження донизу або трапеція) */
-    border-bottom-left-radius: 8px;
-    border-bottom-right-radius: 8px;
-    
-    /* Невеликий перехід для краси */
-    transition: transform 0.4s ease, filter 0.4s ease;
-}
+.r-engine { width: 90px; height: 50px; background: #333; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; border-top: 4px solid #111; }
 .main-flame { width: 50px; height: 120px; background: linear-gradient(to bottom, #fff, #ffeb3b, #ff5722, transparent); border-radius: 50% 50% 20% 20%; margin-top: -10px; filter: blur(8px); opacity: 0.9; animation: flameFlicker 0.08s infinite alternate-reverse; }
 
 @keyframes flameFlicker { from { transform: scaleY(1); opacity: 0.8; } to { transform: scaleY(1.1); opacity: 1; } }
@@ -659,135 +613,4 @@ header {
     .info-panel { position: relative; width: 90%; right: auto; top: auto; transform: none; opacity: 1; pointer-events: all; margin-bottom: 50px; }
     .planet-nav { top: 80px; gap: 1rem; }
     body { overflow-y: auto; }
-}
-
-.module.tier-0 {
-    display: flex !important;       /* Примусово показуємо */
-    opacity: 0.25;                   /* Напівпрозорість */
-    filter: grayscale(1) blur(0.5px); /* Чорно-біле і розмите */
-    border: 1px dashed var(--accent-cyan); /* Пунктирний контур */
-    background: rgba(0, 243, 255, 0.05) !important; /* Легкий фон */
-    pointer-events: all;            /* Дозволяємо клікати */
-    box-shadow: none !important;
-}
-
-.module.tier-0:hover {
-    opacity: 0.6;
-    filter: grayscale(0.6);
-}
-
-/* Ховаємо деталі всередині креслення (вікна, логотипи) */
-.module.tier-0 .window,
-.module.tier-0 .logo-print,
-.module.tier-0 .cargo-door,
-.module.tier-0 .tech-label,
-.module.tier-0 .booster-flame {
-    opacity: 0; 
-}
-
-/* Специфіка для Двигуна (Креслення) */
-.r-engine.tier-0 {
-    height: 30px !important;
-    width: 90px !important;
-    background: transparent;
-    border: 1px dashed var(--accent-cyan);
-    border-top: none;
-}
-/* Ховаємо вогонь у креслення */
-.r-engine.tier-0 + .main-flame {
-    display: none;
-}
-
-/* --- TIER 1: СТАНДАРТ (INSTALLED) --- */
-/* Звичайний вигляд, як у базовому CSS */
-.module.tier-1 {
-    opacity: 1;
-    filter: none;
-    border: none;
-    animation: installFlash 0.5s ease-out; /* Спалах при покупці */
-}
-
-/* Відновлюємо стандартний двигун */
-.r-engine.tier-1 {
-    height: 50px; /* Стандартна висота */
-    background: #333;
-    transform: scale(0.8);
-    filter: brightness(1);
-}
-/* Стандартний вогонь */
-.r-engine.tier-1 + .main-flame {
-    display: block;
-    height: 120px;
-    background: linear-gradient(to bottom, #fff, #ffeb3b, #ff5722, transparent);
-}
-/* Стандартний ніс */
-.r-engine.tier-1 {
-    width: 60px !important; /* Фіксуємо малу ширину */
-    height: 40px;
-    background: #333;
-    border-bottom: none;
-    box-shadow: inset 0 -5px 10px rgba(0,0,0,0.5);
-}
-
-/* Виправлення носа для Tier-1 */
-.r-nose.tier-1 {
-    filter: brightness(1);
-}
-
-.r-nose.tier-2 {
-    filter: grayscale(1) brightness(0.9);
-    border: 1px solid rgba(255,255,255,0.4);
-}
-
-
-/* Елітний Двигун (Потужний) */
-.r-engine.tier-2 {
-    height: 70px !important;       /* Стає довшим */
-    width: 100px !important;       /* Стає ширшим */
-    background: #1a1a1a;
-    border-bottom: 3px solid var(--accent-cyan);
-    transform: scale(1.2);
-    filter: brightness(1.4) drop-shadow(0 0 20px cyan); /* Неонова смужка */
-}
-/* Елітний Вогонь (Іонний/Синій) */
-.r-engine.tier-2 + .main-flame {
-    height: 160px !important;      /* Довший шлейф */
-    width: 50px !important;
-    background: linear-gradient(to bottom, #fff, #00f3ff, #0044ff, transparent); /* Синій градієнт */
-    filter: blur(6px);
-}
-
-/* Елітний Ніс (Темний титан) */
-.r-nose.tier-2 {
-    border-bottom-color: #455a64; /* Темно-сірий метал */
-}
-
-/* Елітна Кабіна (Золоте скло) */
-.r-cabin.tier-2 {
-    background: #cfd8dc;
-    border-right: 3px solid var(--accent-cyan);
-}
-.r-cabin.tier-2 .window {
-    background: #ffcc00; /* Золото */
-    box-shadow: 0 0 15px rgba(255, 204, 0, 0.8); /* Світіння вікна */
-    border-color: #555;
-}
-
-/* Елітний Вантажний відсік */
-.r-cargo.tier-2 {
-    background-image: repeating-linear-gradient(45deg, rgba(0,243,255,0.15) 0px, rgba(0,243,255,0.15) 10px, transparent 10px, transparent 20px);
-    border-color: var(--accent-cyan);
-}
-
-/* Елітні крила/стабілізатори */
-.r-fins.tier-2 .fin-left, 
-.r-fins.tier-2 .fin-right {
-    border-bottom-color: #37474f; /* Темніший колір */
-    filter: drop-shadow(0 0 5px var(--accent-cyan));
-}
-
-/* Анімація покупки (спалах) */
-@keyframes installFlash {
-    0% { transform: scale(1.1); filter: brightness(3); }
-    100% { transform: scale(1); filter: brightness(1); }
 }

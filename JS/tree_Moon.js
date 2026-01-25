@@ -11,66 +11,61 @@ const NODE_HEIGHT = 145;
 // --- 1. ОНОВЛЕНІ КООРДИНАТИ (Рівні лінії) ---
 // Базова точка X=1000, Y=1000. Крок по X = 250px, Крок по Y = 200px
 const treeNodes = [
-    // === ГРУПА 1: Верхня (1 вхід -> 2 гілки -> продовження) ===
-    // Корінь групи (стоїть по центру між гілками)
+    // === ГРУПА 1: Корпус (Основа -> Відсік/Панелі або Надкрилки) ===
+    // Корінь групи
     { 
-        id: 'root1', name: 'Command Center', tier: 'I', desc: 'Головний модуль.', 
-        x: 1000, y: 1100, // Y=1100 (середина між 1000 і 1200)
-        req: null, owned: true, img: 'images/modules/nose.png' 
+        id: 'root1', name: 'Сталевий Корпус', tier: 'I', desc: 'Базова основа ракети.', 
+        x: 1000, y: 1100, 
+        req: null, owned: true, img: 'images/Korpus.png' 
     },
-    // Верхня гілка
+    // Верхня гілка (Додатковий відділ -> Сонячні панелі)
     { 
-        id: 'branch1_up1', name: 'AI Pilot', tier: 'II', desc: 'Штучний інтелект.', 
-        x: 1300, y: 1000, // Вгору і вправо
-        req: 'root1', owned: false, img: 'images/modules/ai.png' 
-    },
-    { 
-        id: 'branch1_up2', name: 'Neural Net', tier: 'III', desc: 'Нейромережа.', 
-        x: 1600, y: 1000, // Продовження верхньої лінії
-        req: 'branch1_up1', owned: false, img: 'images/modules/quantum.png' 
-    },
-    // Нижня гілка
-    { 
-        id: 'branch1_down1', name: 'Heavy Hull', tier: 'II', desc: 'Важка броня.', 
-        x: 1300, y: 1200, // Вниз і вправо
-        req: 'root1', owned: false, img: 'images/modules/body.png' 
+        id: 'branch1_up1', name: 'Вантажний Відсік', tier: 'II', desc: 'Додатковий модуль.', 
+        x: 1300, y: 1000, 
+        req: 'root1', owned: false, img: 'images/Korpus.png' 
     },
     { 
-        id: 'branch1_down2', name: 'Titanium Shell', tier: 'III', desc: 'Титановий щит.', 
-        x: 1600, y: 1200, // Продовження нижньої лінії
-        req: 'branch1_down1', owned: false, img: 'images/modules/shield.png' 
+        id: 'branch1_up2', name: 'Сонячні Панелі', tier: 'III', desc: 'Генерація енергії.', 
+        x: 1600, y: 1000, 
+        req: 'branch1_up1', owned: false, img: 'images/Bataries.png' 
+    },
+    // Нижня гілка (Надкрилки)
+    { 
+        id: 'branch1_down1', name: 'Аеро-надкрилки', tier: 'II', desc: 'Стабілізація польоту.', 
+        x: 1300, y: 1200, 
+        req: 'root1', owned: false, img: 'images/Stabilizator.png' 
     },
 
-    // === ГРУПА 2: Середня (1 вхід -> 2 кінцеві точки) ===
+    // === ГРУПА 2: Двигуни (Турбіна -> Покращення або Бокові) ===
     // Корінь
     { 
-        id: 'root2', name: 'Propulsion', tier: 'I', desc: 'Двигуни.', 
-        x: 1000, y: 1550, // Відступ вниз
-        req: null, owned: true, img: 'images/modules/engine.png' 
+        id: 'root2', name: 'Турбо-нагнітач', tier: 'I', desc: 'Подвійна система нагнітання для максимальної тяги двигуна.', 
+        x: 1000, y: 1550, 
+        req: null, owned: true, img: 'images/Turbina.png' 
     },
-    // Верхнє відгалуження
+    // Верхнє відгалуження (Покращена турбіна)
     { 
-        id: 'branch2_up', name: 'Ion Thrusters', tier: 'II', desc: 'Іонні рушії.', 
+        id: 'branch2_up', name: 'Турбо-Форсаж', tier: 'II', desc: 'Покращена турбіна.', 
         x: 1300, y: 1450, 
-        req: 'root2', owned: false, img: 'images/modules/booster.png' 
+        req: 'root2', owned: false, img: 'images/Turbina.png' 
     },
-    // Нижнє відгалуження
+    // Нижнє відгалуження (Бокові турбіни)
     { 
-        id: 'branch2_down', name: 'Warp Drive', tier: 'II', desc: 'Варп-двигун.', 
+        id: 'branch2_down', name: 'Бокові Рушії', tier: 'II', desc: 'Маневрені турбіни.', 
         x: 1300, y: 1650, 
-        req: 'root2', owned: false, img: 'images/modules/quantum.png' 
+        req: 'root2', owned: false, img: 'images/Turbina.png' 
     },
 
-    // === ГРУПА 3: Нижня (Проста лінія 1 -> 1) ===
+    // === ГРУПА 3: Верхівка (Верхівка -> Покращення) ===
     { 
-        id: 'root3', name: 'Life Support', tier: 'I', desc: 'Життєзабезпечення.', 
+        id: 'root3', name: 'Сенсорний шпиль', tier: 'I', desc: 'Модернізована верхівка з датчиками атмосфери та телеметрією.', 
         x: 1000, y: 1900, 
-        req: null, owned: true, img: 'images/modules/fairing.png' 
+        req: null, owned: true, img: 'images/Nose.png' 
     },
     { 
-        id: 'branch3', name: 'Cryo Stasis', tier: 'II', desc: 'Кріо-камера.', 
-        x: 1300, y: 1900, // Прямо вправо
-        req: 'root3', owned: false, img: 'images/modules/body.png' 
+        id: 'branch3', name: 'Керамічний Щит', tier: 'II', desc: 'Покращена верхівка.', 
+        x: 1300, y: 1900, 
+        req: 'root3', owned: false, img: 'images/Nose.png' 
     }
 ];
 

@@ -73,51 +73,56 @@
         </div>
 
         <div class="rocket-shaker"> 
-            <div class="rocket-stage">
-                
+           <div class="rocket-stage">
+                <div class="module r-cannon" data-module="nose"></div>
                 <div class="module r-nose" data-module="nose"></div>
-                
+
                 <div class="module r-cabin" data-module="cabin">
                     <div class="window"></div>
                 </div>
-
+            
                 <div class="module r-cargo" data-module="cargo">
                     <div class="cargo-door"></div>
                     <span class="tech-label">PAYLOAD</span>
                 </div>
-                
-                <div class="solar-array">
-                    <div class="module solar-left" data-module="solar"></div>
-                    <div class="module solar-right" data-module="solar"></div>
+            
+                <div class="module r-service" data-module="solar">
+                    <span class="tech-label small">PWR-UNIT</span>
                 </div>
 
+                <div class="solar-array">
+                    <div class="module solar-panel left-upper" data-module="solar"></div>
+                    <div class="module solar-panel left-lower" data-module="solar"></div>
+                    <div class="module solar-panel right-upper" data-module="solar"></div>
+                    <div class="module solar-panel right-lower" data-module="solar"></div>
+                </div>
+            
                 <div class="module r-body" data-module="body">
                     <span class="logo-print">HEAVY-X</span>
-                    
-                    <div class="boosters-container">
-                        <div class="module booster left-booster" data-module="booster">
-                            <div class="booster-flame"></div>
-                        </div>
-                        <div class="module booster right-booster" data-module="booster">
-                            <div class="booster-flame"></div>
-                        </div>
-                    </div>
 
+                    <div class="boosters-container">
+                        <div class="module booster booster-l1" data-module="booster"><div class="booster-flame"></div></div>
+                        <div class="module booster booster-l2" data-module="booster"><div class="booster-flame"></div></div>
+
+                        <div class="module booster booster-r1" data-module="booster"><div class="booster-flame"></div></div>
+                        <div class="module booster booster-r2" data-module="booster"><div class="booster-flame"></div></div>
+                    </div>
+                
                     <div class="r-fins">
                         <div class="module fin-left" data-module="fins"></div>
                         <div class="module fin-right" data-module="fins"></div>
                     </div>
                 </div>
-                
+
                 <div class="module r-engine" data-module="engine"></div>
                 <div class="flame main-flame"></div>
+            </div> <div class="tech-tree-container">
+            <button class="tech-tree-btn">
+                <span class="btn-scan-line"></span>
+                <span class="btn-text">ДЕРЕВО РОЗРОБОК</span>
+                <div class="btn-corners"></div>
+            </button>
             </div>
-            <div class="tech-tree-container">
-                <button class="tech-tree-btn">
-                    <span class="btn-scan-line"></span>
-                    <span class="btn-text">ДЕРЕВО РОЗРОБОК</span>
-                    <div class="btn-corners"></div>
-                </button>
             </div>
         </div>
 

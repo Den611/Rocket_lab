@@ -10,77 +10,101 @@ const NODE_WIDTH = 150;
 const NODE_HEIGHT = 145;
 
 const treeNodes = [
-    // === ГРУПА 1: ВЕРХНЯ (2 в ряд -> розвилка -> верх продовжується) ===
+    // === ГРУПА 1: КОРПУС ТА ЕНЕРГІЯ (Вантажний відсік -> Герметизація -> Панелі) ===
     { 
-        id: 'g1_1', name: 'Core Module', tier: 'I', desc: 'Центральний модуль.', 
+        id: 'g1_1', name: 'Вантажний Відсік', tier: 'I', 
+        desc: 'Базовий модуль для перевезення корисного вантажу.', 
         x: 1000, y: 1000, 
-        req: null, owned: true, img: 'images/modules/nose.png' 
+        req: null, owned: true, img: 'images/Korpus.png',
+        rocketKey: 'cargo', level: 1 
     },
     { 
-        id: 'g1_2', name: 'Processing Unit', tier: 'II', desc: 'Обробка даних.', 
-        x: 1250, y: 1000, // Другий у лінії
-        req: 'g1_1', owned: false, img: 'images/modules/ai.png' 
+        id: 'g1_2', name: 'Герметизація', tier: 'II', 
+        desc: 'Покращена ізоляція відсіку для захисту вантажу.', 
+        x: 1250, y: 1000, 
+        req: 'g1_1', owned: false, img: 'images/Korpus.png',
+        rocketKey: 'cargo', level: 2 
     },
-    // Розвилка починається після другого блоку (g1_2)
+    // Розвилка: Вгору (Панель керування) / Вниз (Сонячні панелі)
     { 
-        id: 'g1_up', name: 'Adv. Logic', tier: 'III', desc: 'Вища логіка.', 
-        x: 1500, y: 900, // Вгору
-        req: 'g1_2', owned: false, img: 'images/modules/quantum.png' 
-    },
-    { 
-        id: 'g1_down', name: 'Firewall', tier: 'III', desc: 'Захист.', 
-        x: 1500, y: 1100, // Вниз
-        req: 'g1_2', owned: false, img: 'images/modules/shield.png' 
-    },
-    // Продовження верхньої гілки
-    { 
-        id: 'g1_end', name: 'AI Nexus', tier: 'IV', desc: 'Ядро ШІ.', 
-        x: 1750, y: 900, // Прямо від верхнього
-        req: 'g1_up', owned: false, img: 'images/modules/ai.png' 
-    },
-
-
-    // === ГРУПА 2: СЕРЕДНЯ (1 -> розвилка) ===
-    { 
-        id: 'g2_1', name: 'Engines', tier: 'I', desc: 'Двигуни.', 
-        x: 1000, y: 1400, // Відступ вниз
-        req: null, owned: true, img: 'images/modules/engine.png' 
+        id: 'g1_up', name: 'Панель Оновлення', tier: 'III', 
+        desc: 'Система розподілу енергії для нових модулів.', 
+        x: 1500, y: 900, 
+        req: 'g1_2', owned: false, img: 'images/Korpus.png',
+        rocketKey: 'cabin', level: 2
     },
     { 
-        id: 'g2_up', name: 'Ion Thruster', tier: 'II', desc: 'Іонний привід.', 
-        x: 1250, y: 1300, // Вгору
-        req: 'g2_1', owned: false, img: 'images/modules/booster.png' 
+        id: 'g1_down', name: 'Сонячні Панелі', tier: 'III', 
+        desc: 'Розкладні фотоелементи для генерації енергії.', 
+        x: 1500, y: 1100, 
+        req: 'g1_2', owned: false, img: 'images/Bataries.png',
+        rocketKey: 'solar', level: 1
     },
+    // Фінал гілки
     { 
-        id: 'g2_down', name: 'Warp Drive', tier: 'II', desc: 'Варп-двигун.', 
-        x: 1250, y: 1500, // Вниз
-        req: 'g2_1', owned: false, img: 'images/modules/quantum.png' 
+        id: 'g1_end', name: 'Нові Панелі MK-II', tier: 'IV', 
+        desc: 'Високоефективні панелі подвійної площі.', 
+        x: 1750, y: 1100, // Йде від g1_down
+        req: 'g1_down', owned: false, img: 'images/Bataries.png',
+        rocketKey: 'solar', level: 2
     },
 
 
-    // === ГРУПА 3: НИЖНЯ (Дві паралельні лінії) ===
-    // Лінія 1
+    // === ГРУПА 2: ДВИГУНИ (Турбо-форсаж -> Покращення / Бокові турбіни) ===
     { 
-        id: 'g3_a1', name: 'Life Support', tier: 'I', desc: 'Життєзабезпечення.', 
+        id: 'g2_1', name: 'Турбо-Форсаж', tier: 'I', 
+        desc: 'Система впорскування палива для різкого ривка.', 
+        x: 1000, y: 1400, 
+        req: null, owned: true, img: 'images/Turbina.png',
+        rocketKey: 'engine', level: 1
+    },
+    { 
+        id: 'g2_up', name: 'Покращений Форсаж', tier: 'II', 
+        desc: 'Оптимізована камера згоряння для економії палива.', 
+        x: 1250, y: 1300, 
+        req: 'g2_1', owned: false, img: 'images/Turbina.png',
+        rocketKey: 'engine', level: 2
+    },
+    { 
+        id: 'g2_down', name: 'Бокові Турбіни', tier: 'II', 
+        desc: 'Додаткові маневрові двигуни на корпусі.', 
+        x: 1250, y: 1500, 
+        req: 'g2_1', owned: false, img: 'images/Turbina.png',
+        rocketKey: 'booster', level: 1
+    },
+
+
+    // === ГРУПА 3: ЗАХИСТ ТА ЗБРОЯ ===
+    // Лінія 1: Ніс/Щит
+    { 
+        id: 'g3_a1', name: 'Керамічний Щит', tier: 'I', 
+        desc: 'Термостійке покриття проти атмосферного тертя.', 
         x: 1000, y: 1700, 
-        req: null, owned: true, img: 'images/modules/fairing.png' 
+        req: null, owned: true, img: 'images/Nose.png',
+        rocketKey: 'nose', level: 1
     },
     { 
-        id: 'g3_a2', name: 'Cryo Pods', tier: 'II', desc: 'Кріо-капсули.', 
-        x: 1250, y: 1700, // Прямо
-        req: 'g3_a1', owned: false, img: 'images/modules/body.png' 
+        id: 'g3_a2', name: 'Нова Верхівка', tier: 'II', 
+        desc: 'Посилений титановий конус для пробиття хмар.', 
+        x: 1250, y: 1700, 
+        req: 'g3_a1', owned: false, img: 'images/Nose.png',
+        rocketKey: 'nose', level: 2
     },
 
-    // Лінія 2
+    // Лінія 2: Зброя (Бластери)
     { 
-        id: 'g3_b1', name: 'Cargo Bay', tier: 'I', desc: 'Вантажний відсік.', 
+        id: 'g3_b1', name: 'Бластер', tier: 'I', 
+        desc: 'Лазерна установка для знищення астероїдів.', 
         x: 1000, y: 1900, 
-        req: null, owned: true, img: 'images/modules/body.png' 
+        req: null, owned: true, img: 'images/Blasters.png', // Якщо є іконка
+        rocketKey: 'weapons', level: 1
     },
     { 
-        id: 'g3_b2', name: 'Expansion', tier: 'II', desc: 'Розширення.', 
-        x: 1250, y: 1900, // Прямо
-        req: 'g3_b1', owned: false, img: 'images/modules/shield.png' 
+        id: 'g3_b2', name: 'Покращений Бластер', tier: 'II', 
+        desc: 'Скорострільна плазмова гармата подвійної дії.', 
+        x: 1250, y: 1900, 
+        req: 'g3_b1', owned: false, img: 'images/Blasters.png',
+        rocketKey: 'weapons', level: 2
     }
 ];
 

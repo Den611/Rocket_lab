@@ -15,7 +15,7 @@ const treeNodes = [
     { 
         id: 'g1_start', name: 'Core Module', tier: 'I', desc: 'Ядро.', 
         x: 1000, y: 1000, 
-        req: null, owned: true, img: 'images/modules/nose.png' 
+        req: null, owned: true, img: 'images/Nose.png' 
     },
     // 2. Лінійне продовження (Точка розвилки)
     { 
