@@ -3,100 +3,70 @@ import random
 from database import Database
 from aiogram import Bot
 
-# Налаштування (мають співпадати з handler/mission.py)
-PLANET_PROGRESSION = {"Earth": "Moon", "Moon": "Mars", "Mars": "Jupiter", "Jupiter": "Earth"}
-
+PLANET_NEXT = {"Earth": "Moon", "Moon": "Mars", "Mars": "Jupiter", "Jupiter": "Earth"}
 db = Database('space.db')
 
 
 async def start_autocheck(bot: Bot):
-    print("🔄 Фоновий моніторинг запущено...")
-
     while True:
         try:
-            await check_missions(bot)
-            await check_upgrades(bot)
+            await check_mis(bot)
+            await check_upg(bot)
+            await check_base(bot)
         except Exception as e:
-            print(f"⚠️ Помилка в autocheck: {e}")
-
-        # Перевіряємо кожні 30 секунд
+            print(e)
         await asyncio.sleep(30)
 
 
-async def notify_family(bot: Bot, family_id, text):
-    users = db.get_family_user_ids(family_id)
-    for user_id in users:
+async def notify(bot, fid, txt):
+    for uid in db.get_family_user_ids(fid):
         try:
-            await bot.send_message(user_id, text, parse_mode="Markdown")
+            await bot.send_message(uid, txt, parse_mode="Markdown")
         except:
             pass
 
 
-# --- ПЕРЕВІРКА МІСІЙ ---
-async def check_missions(bot: Bot):
-    expired = db.get_expired_missions()
-    # row: 0=family_id, 1=mission_id, 2=launch_id, 3=current_planet
+async def check_mis(bot):
+    for row in db.get_expired_missions():
+        fid, mid, lid, planet = row
+        db.clear_mission_timer(fid)
+        m = db.get_mission_by_id(mid)
+        # 4=rew, 11=risk
+        fam = db.get_family_info(fid)
+        hull = fam[4]
 
-    for row in expired:
-        family_id, mission_id, launch_id, current_planet = row
-
-        # Очищаємо таймер, щоб не обробляти двічі
-        db.clear_mission_timer(family_id)
-
-        mission = db.get_mission_by_id(mission_id)
-        # mission: ... 3=reward, 4=reward(дубль?), перевірте індекси в БД
-        # У вашій БД get_mission_by_id повертає SELECT *, тому:
-        # 0=id, 1=name, 2=desc, 3=diff, 4=reward, 5=planet, 6=is_boss
-
-        mission_name = mission[1]
-        reward = mission[4]
-        is_boss = mission[6]
-        target_planet = mission[5]  # Планета місії
-
-        # Логіка успіху (85%)
-        if random.randint(1, 100) <= 85:
-            db.update_launch_status(launch_id, "success")
-            db.update_balance(family_id, reward)
-
-            msg = (
-                f"✅ **МІСІЯ ЗАВЕРШЕНА!**\n\n"
-                f"🚀 Ракета успішно повернулася з завдання **«{mission_name}»**.\n"
-                f"💰 Отримано нагороду: **{reward}**"
-            )
-
-            if is_boss:
-                next_p = PLANET_PROGRESSION.get(target_planet)
-                if next_p:
-                    db.move_family_to_planet(family_id, next_p)
-                    msg += f"\n\n🌌 **ГІПЕРСТРИБОК!**\nВи перелетіли на нову базу: **{next_p}**!"
-
-            await notify_family(bot, family_id, msg)
-
+        roll = random.randint(1, 100)
+        if roll <= m[11]:  # Pirates
+            if random.randint(1, 100) <= hull * 15:
+                db.update_balance(fid, m[4])
+                await notify(bot, fid, f"⚔️ Пірати відбиті! +💰{m[4]}")
+            else:
+                loss = int(m[4] * 0.5)
+                db.update_balance(fid, m[4] - loss)
+                await notify(bot, fid, f"🏴‍☠️ Пірати вкрали 50%! +💰{m[4] - loss}")
         else:
-            db.update_launch_status(launch_id, "failed")
-            msg = (
-                f"💥 **АВАРІЯ!**\n\n"
-                f"Місія **«{mission_name}»** зазнала невдачі при посадці.\n"
-                f"Екіпаж врятувався, але час та ресурси втрачено."
-            )
-            await notify_family(bot, family_id, msg)
+            db.update_balance(fid, m[4])
+            msg = f"✅ Успіх! +💰{m[4]}"
+            if m[6] and PLANET_NEXT.get(m[5]):
+                db.move_family_to_planet(fid, PLANET_NEXT[m[5]])
+                msg += f"\n🌌 Переліт на {PLANET_NEXT[m[5]]}!"
+            await notify(bot, fid, msg)
 
 
-# --- ПЕРЕВІРКА БУДІВНИЦТВА ---
-async def check_upgrades(bot: Bot):
-    expired = db.get_expired_upgrades()
-    # row: 0=family_id, 1=planet, 2=mine_lvl
+async def check_upg(bot):
+    for row in db.get_expired_upgrades():
+        db.finish_upgrade(row[0])
+        await notify(bot, row[0], "✅ Завод готовий!")
 
-    for row in expired:
-        family_id, planet, old_lvl = row
 
-        # Завершуємо будівництво в БД (рівень +1, таймер NULL)
-        db.finish_upgrade(family_id)
-
-        msg = (
-            f"✅ **БУДІВНИЦТВО ЗАВЕРШЕНО!**\n\n"
-            f"🏭 На планеті **{planet}** відкрито новий завод.\n"
-            f"Поточний рівень: **{old_lvl + 1}**.\n"
-            f"Видобуток відновлено."
-        )
-        await notify_family(bot, family_id, msg)
+async def check_base(bot):
+    for row in db.get_all_families_for_events():
+        fid, pl, hull, eng, bal = row
+        if pl in ["Earth", "Moon"]: continue
+        if random.randint(1, 100) <= 5:
+            defense = hull + eng
+            str_pir = random.randint(3, 10)
+            if defense < str_pir:
+                lost = int(bal * 0.05)
+                db.deduct_resources(fid, lost)
+                await notify(bot, fid, f"🚨 Напад на базу! Вкрадено 💰{lost}")

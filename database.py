@@ -3,6 +3,7 @@ import random
 import string
 import datetime
 
+
 class Database:
     def __init__(self, db_file):
         self.connection = sqlite3.connect(db_file)
@@ -23,24 +24,24 @@ class Database:
                 current_planet TEXT DEFAULT 'Earth',
 
                 -- РЕСУРСИ
-                res_iron INTEGER DEFAULT 0,
-                res_fuel INTEGER DEFAULT 0,
-                res_regolith INTEGER DEFAULT 0,
-                res_he3 INTEGER DEFAULT 0,
-                res_silicon INTEGER DEFAULT 0,
-                res_oxide INTEGER DEFAULT 0,
-                res_hydrogen INTEGER DEFAULT 0,
-                res_helium INTEGER DEFAULT 0,
+                res_iron INTEGER DEFAULT 0, res_fuel INTEGER DEFAULT 0,
+                res_regolith INTEGER DEFAULT 0, res_he3 INTEGER DEFAULT 0,
+                res_silicon INTEGER DEFAULT 0, res_oxide INTEGER DEFAULT 0,
+                res_hydrogen INTEGER DEFAULT 0, res_helium INTEGER DEFAULT 0,
 
                 -- ІНФРАСТРУКТУРА
                 mine_lvl INTEGER DEFAULT 0,
                 last_collection DATETIME DEFAULT CURRENT_TIMESTAMP,
 
                 -- ТАЙМЕРИ
-                mission_end_time DATETIME DEFAULT NULL,   
-                active_launch_id INTEGER DEFAULT NULL,    
-                active_mission_id INTEGER DEFAULT NULL,   
-                upgrade_end_time DATETIME DEFAULT NULL    
+                mission_end_time DATETIME DEFAULT NULL,
+                active_launch_id INTEGER DEFAULT NULL,
+                active_mission_id INTEGER DEFAULT NULL,
+                upgrade_end_time DATETIME DEFAULT NULL,
+
+                -- PvP (НОВЕ)
+                last_raid_time DATETIME DEFAULT NULL,
+                shield_until DATETIME DEFAULT NULL
             )
         """)
         # 2. Користувачі
@@ -53,7 +54,7 @@ class Database:
                 FOREIGN KEY(family_id) REFERENCES families(id)
             )
         """)
-        # 3. Місії
+        # 3. Місії (З НОВИМИ КОЛОНКАМИ flight_time та pirate_risk)
         self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS missions (
                 id INTEGER PRIMARY KEY,
@@ -65,7 +66,11 @@ class Database:
                 is_boss_mission BOOLEAN DEFAULT 0,
                 cost_money INTEGER DEFAULT 0,
                 req_res_name TEXT DEFAULT NULL,
-                req_res_amount INTEGER DEFAULT 0
+                req_res_amount INTEGER DEFAULT 0,
+
+                -- НОВІ ПАРАМЕТРИ
+                flight_time INTEGER DEFAULT 10,
+                pirate_risk INTEGER DEFAULT 10
             )
         """)
         # 4. Запуски
@@ -83,32 +88,70 @@ class Database:
         """)
         self.connection.commit()
 
-    # --- МЕТОДИ ДЛЯ AUTOCHECK (Додано) ---
-    def get_expired_missions(self):
-        """Знаходить сім'ї, у яких час місії вже вийшов"""
+    # --- МЕТОДИ (ОНОВЛЕНО) ---
+
+    # Додано flight_time та pirate_risk
+    def add_mission(self, name, description, difficulty, reward, planet, is_boss, cost_money=0, req_res=None, req_amt=0,
+                    flight_time=10, pirate_risk=10):
+        with self.connection:
+            self.cursor.execute("""
+                INSERT INTO missions (name, description, difficulty, reward, planet, is_boss_mission, cost_money, req_res_name, req_res_amount, flight_time, pirate_risk) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (name, description, difficulty, reward, planet, is_boss, cost_money, req_res, req_amt, flight_time,
+                  pirate_risk))
+
+    # Тепер повертає також flight_time і pirate_risk
+    def get_missions_by_planet(self, planet_name):
         with self.connection:
             return self.cursor.execute("""
-                SELECT id, active_mission_id, active_launch_id, current_planet 
-                FROM families 
-                WHERE mission_end_time <= CURRENT_TIMESTAMP AND mission_end_time IS NOT NULL
-            """).fetchall()
+                SELECT id, name, description, reward, is_boss_mission, cost_money, flight_time, pirate_risk 
+                FROM missions WHERE planet = ?
+            """, (planet_name,)).fetchall()
 
-    def get_expired_upgrades(self):
-        """Знаходить сім'ї, у яких час будівництва вже вийшов"""
+    def get_mission_by_id(self, mission_id):
+        with self.connection:
+            return self.cursor.execute("SELECT * FROM missions WHERE id = ?", (mission_id,)).fetchone()
+
+    # --- PvP ТА ІНШІ ---
+
+    def get_family_power(self, family_id):
+        with self.connection:
+            row = self.cursor.execute("SELECT engine_lvl, hull_lvl, mine_lvl FROM families WHERE id = ?",
+                                      (family_id,)).fetchone()
+            if row: return row[0] + row[1] + int(row[2] / 2)
+            return 0
+
+    def get_random_enemy(self, my_family_id):
         with self.connection:
             return self.cursor.execute("""
-                SELECT id, current_planet, mine_lvl 
+                SELECT id, name, balance, hull_lvl, current_planet 
                 FROM families 
-                WHERE upgrade_end_time <= CURRENT_TIMESTAMP AND upgrade_end_time IS NOT NULL
-            """).fetchall()
+                WHERE id != ? 
+                  AND current_planet NOT IN ('Earth', 'Moon')
+                  AND (shield_until IS NULL OR shield_until <= CURRENT_TIMESTAMP)
+                ORDER BY RANDOM() LIMIT 1
+            """, (my_family_id,)).fetchone()
 
-    def get_family_user_ids(self, family_id):
-        """Отримує ID всіх користувачів сім'ї для розсилки"""
+    def get_all_families_for_events(self):
         with self.connection:
-            result = self.cursor.execute("SELECT user_id FROM users WHERE family_id = ?", (family_id,)).fetchall()
-            return [row[0] for row in result]
+            return self.cursor.execute(
+                "SELECT id, current_planet, hull_lvl, engine_lvl, balance FROM families").fetchall()
 
-    # --- ТАЙМЕРИ ---
+    def set_raid_cooldown(self, fid, mins):
+        t = datetime.datetime.now() + datetime.timedelta(minutes=mins)
+        with self.connection: self.cursor.execute("UPDATE families SET last_raid_time = ? WHERE id = ?", (t, fid))
+
+    def get_last_raid(self, fid):
+        with self.connection:
+            r = self.cursor.execute("SELECT last_raid_time FROM families WHERE id = ?", (fid,)).fetchone()
+            return r[0] if r else None
+
+    def set_shield(self, fid, mins):
+        t = datetime.datetime.now() + datetime.timedelta(minutes=mins)
+        with self.connection: self.cursor.execute("UPDATE families SET shield_until = ? WHERE id = ?", (t, fid))
+
+    # --- СТАНДАРТНІ МЕТОДИ ---
+
     def get_timers(self, family_id):
         with self.connection:
             return self.cursor.execute(
@@ -139,7 +182,21 @@ class Database:
                 "UPDATE families SET mine_lvl = mine_lvl + 1, last_collection = CURRENT_TIMESTAMP, upgrade_end_time = NULL WHERE id = ?",
                 (family_id,))
 
-    # --- АДМІН ФУНКЦІЇ ---
+    def get_expired_missions(self):
+        with self.connection:
+            return self.cursor.execute(
+                "SELECT id, active_mission_id, active_launch_id, current_planet FROM families WHERE mission_end_time <= CURRENT_TIMESTAMP AND mission_end_time IS NOT NULL").fetchall()
+
+    def get_expired_upgrades(self):
+        with self.connection:
+            return self.cursor.execute(
+                "SELECT id, current_planet, mine_lvl FROM families WHERE upgrade_end_time <= CURRENT_TIMESTAMP AND upgrade_end_time IS NOT NULL").fetchall()
+
+    def get_family_user_ids(self, family_id):
+        with self.connection:
+            res = self.cursor.execute("SELECT user_id FROM users WHERE family_id = ?", (family_id,)).fetchall()
+            return [row[0] for row in res]
+
     def admin_skip_timers(self, family_id):
         with self.connection:
             past_time = datetime.datetime.now() - datetime.timedelta(minutes=1)
@@ -162,7 +219,6 @@ class Database:
                 WHERE id = ?
             """, (family_id,))
 
-    # --- ІНШІ СТАНДАРТНІ МЕТОДИ ---
     def user_exists(self, user_id):
         with self.connection:
             return bool(self.cursor.execute("SELECT * FROM users WHERE user_id = ?", (user_id,)).fetchall())
@@ -212,7 +268,7 @@ class Database:
     def get_family_resources(self, family_id):
         with self.connection:
             return self.cursor.execute(
-                """SELECT balance, res_iron, res_fuel, res_regolith, res_he3, res_silicon, res_oxide, res_hydrogen, res_helium, mine_lvl, last_collection, current_planet FROM families WHERE id = ?""",
+                "SELECT balance, res_iron, res_fuel, res_regolith, res_he3, res_silicon, res_oxide, res_hydrogen, res_helium, mine_lvl, last_collection, current_planet FROM families WHERE id = ?",
                 (family_id,)).fetchone()
 
     def deduct_resources(self, family_id, money, res_name=None, res_amount=0):
@@ -239,23 +295,6 @@ class Database:
     def update_upgrade(self, family_id, upgrade_type):
         with self.connection:
             self.cursor.execute(f"UPDATE families SET {upgrade_type} = {upgrade_type} + 1 WHERE id = ?", (family_id,))
-
-    def add_mission(self, name, description, difficulty, reward, planet, is_boss, cost_money=0, req_res=None,
-                    req_amt=0):
-        with self.connection:
-            self.cursor.execute(
-                "INSERT INTO missions (name, description, difficulty, reward, planet, is_boss_mission, cost_money, req_res_name, req_res_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (name, description, difficulty, reward, planet, is_boss, cost_money, req_res, req_amt))
-
-    def get_missions_by_planet(self, planet_name):
-        with self.connection:
-            return self.cursor.execute(
-                "SELECT id, name, description, reward, is_boss_mission, cost_money FROM missions WHERE planet = ?",
-                (planet_name,)).fetchall()
-
-    def get_mission_by_id(self, mission_id):
-        with self.connection:
-            return self.cursor.execute("SELECT * FROM missions WHERE id = ?", (mission_id,)).fetchone()
 
     def start_launch(self, family_id, mission_id):
         with self.connection:

@@ -1,4 +1,4 @@
-from aiogram import Router, types
+from aiogram import Router, types, F  # <--- Додано імпорт F
 from aiogram.filters import Command
 from database import Database
 from keyboards import get_main_kb_no_family, get_main_kb_with_family
@@ -12,11 +12,13 @@ async def cmd_start(message: types.Message):
     user_id = message.from_user.id
     username = message.from_user.username or "SpaceTraveller"
 
+    # Реєструємо користувача
     db.add_user(user_id, username)
     family_id = db.get_user_family(user_id)
 
     if family_id:
         info = db.get_family_info(family_id)
+        # info: 0=name, 1=code, 2=balance, 3=eng, 4=hull, 5=planet
 
         await message.answer(
             f"📡 **ВХІДНИЙ СИГНАЛ...**\n\n"
@@ -41,3 +43,18 @@ async def cmd_start(message: types.Message):
             parse_mode="Markdown",
             reply_markup=get_main_kb_no_family()
         )
+
+
+@router.message(Command("help"))
+@router.message(F.text == "ℹ️ Допомога")  # Тепер F працює
+async def cmd_help(message: types.Message):
+    text = (
+        "📘 **ДОВІДНИК**\n\n"
+        "🎯 **Мета:** Дістатися Юпітера.\n"
+        "📡 **Місії:** Обирайте місії з розумом. ☠️Ризик = Шанс нападу піратів.\n"
+        "⚔️ **PvP:** На Марсі та Юпітері можна атакувати інші сім'ї (Кнопка «Рейд»).\n"
+        "🛡 **Захист:** Земля і Місяць — безпечна зона. Качайте Корпус, щоб відбивати піратів.\n"
+        "🏭 **Заводи:** Будуйте їх для пасивного доходу.\n"
+        "🛸 **Web:** Натисніть «Ангар», щоб відкрити красиве меню."
+    )
+    await message.answer(text, parse_mode="Markdown")
