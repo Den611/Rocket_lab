@@ -1,6 +1,9 @@
 from aiogram import Router, F, types
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.types import WebAppInfo
 from database import Database
+from config import WEB_APP_URL
+import urllib.parse
 
 router = Router()
 db = Database('space.db')
@@ -10,55 +13,87 @@ db = Database('space.db')
 async def open_shop(message: types.Message):
     family_id = db.get_user_family(message.from_user.id)
     if not family_id:
-        await message.answer("Спочатку вступи в сім'ю!")
-        return
+        return await message.answer("Спочатку вступіть в сім'ю!")
 
-    # Отримуємо інформацію про сім'ю
-    # 0=name, 1=code, 2=balance, 3=engine, 4=hull, 5=planet
     info = db.get_family_info(family_id)
+    res = db.get_family_resources(family_id)
 
-    balance = info[2]
-    eng_lvl = info[3]
-    hull_lvl = info[4]
+    # Генеруємо посилання на Web App для Дерева Досліджень
+    # Передаємо параметри, щоб сайт знав, хто зайшов
+    params = {
+        "family": info[0],
+        "planet": res[11],
+        "balance": res[0],
+        "engine_lvl": info[3],
+        "hull_lvl": info[4]
+    }
+    web_url = f"{WEB_APP_URL}?{urllib.parse.urlencode(params)}"
 
-    # Ціна зростає з рівнем
-    eng_price = eng_lvl * 500
-    hull_price = hull_lvl * 500
+    # Ціни на швидкі покращення
+    eng_price = info[3] * 500
+    hull_price = info[4] * 500
 
     builder = InlineKeyboardBuilder()
-    builder.button(text=f"🔥 Двигун v{eng_lvl + 1} (💰{eng_price})", callback_data=f"buy_upg:engine_lvl:{eng_price}")
-    builder.button(text=f"🛡 Корпус v{hull_lvl + 1} (💰{hull_price})", callback_data=f"buy_upg:hull_lvl:{hull_price}")
+    # Кнопка на Веб-додаток
+    builder.button(text="🔬 Відкрити Дерево Досліджень (WEB)", web_app=WebAppInfo(url=web_url))
+
+    # Швидкі кнопки (якщо треба швидко апнути стат без вебу)
+    builder.button(text=f"🔥 Двигун v{info[3] + 1} (💰{eng_price})", callback_data=f"upg:engine_lvl:{eng_price}")
+    builder.button(text=f"🛡 Корпус v{info[4] + 1} (💰{hull_price})", callback_data=f"upg:hull_lvl:{hull_price}")
     builder.adjust(1)
 
     text = (
-        f"🛒 **КОСМІЧНИЙ МАГАЗИН**\n"
-        f"💰 Ваш баланс: **{balance}**\n\n"
-        f"🔧 **Покращення ракети:**\n"
-        f"🔥 **Двигун (Рівень {eng_lvl}):** Збільшує швидкість та шанс успіху.\n"
-        f"🛡 **Корпус (Рівень {hull_lvl}):** Захищає від аварій.\n"
+        f"🛒 **ЦЕНТР ЗАБЕЗПЕЧЕННЯ**\n"
+        f"━━━━━━━━━━━━━━━━━━━━━\n"
+        f"💰 Бюджет: **{res[0]}**\n\n"
+        f"🔬 **Лабораторія:**\n"
+        f"Для доступу до повного дерева технологій використовуйте Веб-термінал.\n\n"
+        f"🔧 **Швидкий сервіс:**\n"
+        f"🔥 Двигун: **Lv.{info[3]}** (Атака/Швидкість)\n"
+        f"🛡 Корпус: **Lv.{info[4]}** (Захист від піратів)"
     )
 
     await message.answer(text, reply_markup=builder.as_markup(), parse_mode="Markdown")
 
 
-@router.callback_query(F.data.startswith("buy_upg:"))
-async def process_buy(callback: types.CallbackQuery):
-    # data: "buy_upg:type:price"
-    parts = callback.data.split(":")
-    upg_type = parts[1]  # engine_lvl або hull_lvl
-    price = int(parts[2])
+@router.callback_query(F.data.startswith("upg:"))
+async def buy_upgrade(call: types.CallbackQuery):
+    _, upg_type, price = call.data.split(":")
+    price = int(price)
+    fid = db.get_user_family(call.from_user.id)
 
-    family_id = db.get_user_family(callback.from_user.id)
-    balance = db.get_family_resources(family_id)[0]
+    bal = db.get_family_resources(fid)[0]
 
-    if balance >= price:
-        # Списуємо гроші через deduct_resources (або update_balance)
-        # Оскільки deduct_resources у нас універсальний, використаємо його
-        db.deduct_resources(family_id, price)
+    if bal >= price:
+        db.deduct_resources(fid, price)
+        db.update_upgrade(fid, upg_type)
 
-        # Оновлюємо рівень
-        db.update_upgrade(family_id, upg_type)
+        # Оновлюємо текст повідомлення (не шлемо нове!)
+        info = db.get_family_info(fid)
+        new_eng_price = info[3] * 500
+        new_hull_price = info[4] * 500
 
-        await callback.message.edit_text("✅ **Успішна покупка!**\nМодуль встановлено на ракету.")
+        builder = InlineKeyboardBuilder()
+        # Генеруємо URL знову, щоб оновити дані
+        params = {"family": info[0], "planet": info[5], "balance": bal - price}
+        web_url = f"{WEB_APP_URL}?{urllib.parse.urlencode(params)}"
+
+        builder.button(text="🔬 Відкрити Дерево Досліджень (WEB)", web_app=WebAppInfo(url=web_url))
+        builder.button(text=f"🔥 Двигун v{info[3] + 1} (💰{new_eng_price})",
+                       callback_data=f"upg:engine_lvl:{new_eng_price}")
+        builder.button(text=f"🛡 Корпус v{info[4] + 1} (💰{new_hull_price})",
+                       callback_data=f"upg:hull_lvl:{new_hull_price}")
+        builder.adjust(1)
+
+        new_text = (
+            f"✅ **МОДЕРНІЗАЦІЮ ЗАВЕРШЕНО!**\n"
+            f"━━━━━━━━━━━━━━━━━━━━━\n"
+            f"💰 Бюджет: **{bal - price}**\n\n"
+            f"🔧 **Поточний стан:**\n"
+            f"🔥 Двигун: **Lv.{info[3]}**\n"
+            f"🛡 Корпус: **Lv.{info[4]}**"
+        )
+
+        await call.message.edit_text(new_text, reply_markup=builder.as_markup(), parse_mode="Markdown")
     else:
-        await callback.answer("❌ Недостатньо коштів!", show_alert=True)
+        await call.answer("❌ Недостатньо коштів!", show_alert=True)
