@@ -6,8 +6,8 @@ let currentX = 0;
 let currentY = 0; 
 let isDragging = false;
 let startX, startY;
-const NODE_WIDTH = 150;
-const NODE_HEIGHT = 145;
+const NODE_WIDTH = 210;  // Було 150, стало 210 (ширина ноди)
+const NODE_HEIGHT = 85;
 // --- 1. ОНОВЛЕНІ КООРДИНАТИ (Рівні лінії) ---
 // Базова точка X=1000, Y=1000. Крок по X = 250px, Крок по Y = 200px
 const treeNodes = [
@@ -19,44 +19,44 @@ const treeNodes = [
     },
     { 
         id: 'gu2', name: 'Сенсорний шпиль', tier: 'II', desc: 'Модернізована верхівка з датчиками атмосфери та телеметрією.', 
-        x: 1250, y: 1000, 
+        x: 1400, y: 1000,
         req: 'gu1', owned: false, img: 'images/modules/ai.png' 
     },
 
     // --- РЯДОК 2: Корпус ---
     { 
         id: 'nc1', name: 'Корпус', tier: 'I', desc: 'Стандартна алюмінієва оболонка для паливних баків.', 
-        x: 1000, y: 1200, 
+        x: 1000, y: 1250,
         req: null, owned: true, img: 'images/modules/body.png' 
     },
     { 
         id: 'h1', name: 'Титановий каркас', tier: 'II', desc: 'Посилена конструкція, що витримує перевантаження до 15G.', 
-        x: 1250, y: 1200, 
+        x: 1400, y: 1250,
         req: 'nc1', owned: false, img: 'images/modules/fairing.png' 
     },
 
     // --- РЯДОК 3: Турбіна ---
     { 
         id: 'e1', name: 'Турбіна', tier: 'I', desc: 'Базовий насос для подачі паливної суміші в камеру згоряння.', 
-        x: 1000, y: 1400, 
-        req: null, owned: true, img: 'images/modules/engine.png' 
+        x: 1000, y: 1500, 
+        req: null, owned: true, img: 'images/Turbina.png' 
     },
     { 
         id: 'e2', name: 'Турбо-нагнітач', tier: 'II', desc: 'Подвійна система нагнітання для максимальної тяги двигуна.', 
-        x: 1250, y: 1400, 
-        req: 'e1', owned: false, img: 'images/modules/booster.png' 
+        x: 1400, y: 1500, 
+        req: 'e1', owned: false, img: 'images/Turbina.png' 
     },
 
     // --- РЯДОК 4: Надкрилки ---
     {
         id: 'a1', name: 'Надкрилки', tier: 'I', desc: 'Пасивні стабілізатори для стійкості ракети в польоті.',
-        x: 1000, y: 1600,
-        req: null, owned: true, img: 'images/modules/shield.png'
+        x: 1000, y: 1750,
+        req: null, owned: true, img: 'images/Stabilizator.png'
     },
     {
         id: 'a2', name: 'Активні закрилки', tier: 'II', desc: 'Рухомі елементи крил для точного маневрування при посадці.',
-        x: 1250, y: 1600,
-        req: 'a1', owned: false, img: 'images/modules/quantum.png'
+        x: 1400, y: 1750,
+        req: 'a1', owned: false, img: 'images/Stabilizator.png'
     }
 ];
 
@@ -99,17 +99,19 @@ function init() {
         div.style.left = node.x + 'px';
         div.style.top = node.y + 'px';
 
-        const checkmarkHTML = node.owned ? '<span class="checkmark">✔</span>' : '';
         const imageSrc = node.img ? node.img : 'images/placeholder_icon.png';
+        const checkmarkHTML = node.owned ? '<span class="checkmark">✔</span>' : '';
 
         div.innerHTML = `
+            <div class="node-text-col">
+                <div class="node-tier">TIER ${node.tier}</div>
+                <div class="node-title">${node.name}</div>
+            </div>
             <div class="node-img-box">
                 <img src="${imageSrc}" class="node-icon" onerror="this.style.opacity=0">
+                <div class="node-status">${checkmarkHTML}</div>
             </div>
-            <div class="node-tier">TIER ${node.tier}</div>
-            <div class="node-title">${node.name}</div>
-            <div class="node-status">${checkmarkHTML}</div>
-        `;
+            `;
         
         div.onclick = (e) => {
             e.stopPropagation();
@@ -153,22 +155,29 @@ function drawLine(node) {
     line.className = 'line';
     line.id = `line-${node.id}`;
 
-    // 🔹 START — права сторона батька
-    const startX = parent.x + NODE_WIDTH;
-    const startY = parent.y + NODE_HEIGHT / 2;
+    // Координати:
+    // Початок (x1, y1): Правий край батьківського елемента, по центру висоти
+    const startX = parent.x + NODE_WIDTH; 
+    const startY = parent.y + (NODE_HEIGHT / 2);
 
-    // 🔹 END — ліва сторона дитини
+    // Кінець (x2, y2): Лівий край дочірнього елемента, по центру висоти
     const endX = node.x;
-    const endY = node.y + NODE_HEIGHT / 2;
+    const endY = node.y + (NODE_HEIGHT / 2);
 
+    // Математика довжини та кута
     const dx = endX - startX;
     const dy = endY - startY;
     const dist = Math.sqrt(dx * dx + dy * dy);
+    const angle = Math.atan2(dy, dx) * (180 / Math.PI); // Переводимо в градуси
 
+    // Стилі лінії
     line.style.width = dist + 'px';
     line.style.left = startX + 'px';
     line.style.top = startY + 'px';
-    line.style.transform = `rotate(${Math.atan2(dy, dx)}rad)`;
+    
+    // Важливо: transform-origin має бути '0 50%' (лівий край, центр по вертикалі)
+    line.style.transformOrigin = '0 50%'; 
+    line.style.transform = `rotate(${angle}deg)`;
 
     canvas.appendChild(line);
 }
