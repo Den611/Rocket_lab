@@ -13,9 +13,9 @@ const treeNodes = [
     // === ГРУПА 1: ВЕРХНЯ (Асиметрична) ===
     // 1. Старт
     { 
-        id: 'g1_start', name: 'Core Module', tier: 'I', desc: 'Ядро.', 
+        id: 'g1_start', name: 'Герметизація', tier: 'I', desc: 'Покращена ізоляція відсіку для захисту вантажу.', 
         x: 1000, y: 1000, 
-        req: null, owned: true, img: 'images/Nose.png' 
+        req: null, owned: true, img: 'images/Korpus.png' 
     },
     // 2. Лінійне продовження (Точка розвилки)
     { 
@@ -56,9 +56,9 @@ const treeNodes = [
 
     // === ГРУПА 2: СЕРЕДНЯ (Коротка розвилка) ===
     { 
-        id: 'g2_start', name: 'Engine Tech', tier: 'I', desc: 'Двигуни.', 
+        id: 'g2_start', name: 'Покращений Форсаж', tier: 'I', desc: 'Оптимізована камера згоряння для економії палива.', 
         x: 1000, y: 1450, 
-        req: null, owned: true, img: 'images/modules/engine.png' 
+        req: null, owned: true, img: 'images/Turbina.png' 
     },
     { 
         id: 'g2_up', name: 'Ion Thruster', tier: 'II', desc: 'Іон.', 
@@ -74,9 +74,9 @@ const treeNodes = [
 
     // === ГРУПА 3: НИЖНЯ (Проста лінія) ===
     { 
-        id: 'g3_start', name: 'Life Support', tier: 'I', desc: 'Кисень.', 
+        id: 'g3_start', name: 'Нова Верхівка', tier: 'I', desc: 'Посилений титановий конус для пробиття хмар.', 
         x: 1000, y: 1800, 
-        req: null, owned: true, img: 'images/modules/fairing.png' 
+        req: null, owned: true, img: 'images/Nose.png' 
     },
     { 
         id: 'g3_end', name: 'Cryo Stasis', tier: 'II', desc: 'Кріо.', 
@@ -238,5 +238,33 @@ function closePanel() {
     document.getElementById('info-panel').classList.remove('active');
     document.querySelectorAll('.node, .line').forEach(el => el.classList.remove('highlight'));
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    const backBtn = document.getElementById('dynamic-back-btn');
+    const path = window.location.pathname; // Отримуємо поточну адресу
+    
+    // Об'єкт конфігурації: "де ми є" -> "куди йти"
+    const routes = {
+        'tree_Earth.html': { url: 'index.html', text: 'ГОЛОВНА' },
+        'tree_Moon.html':  { url: 'Moon.html',  text: 'МІСЯЦЬ' },
+        'tree_Mars.html':  { url: 'Mars.html',  text: 'МАРС' },
+        'tree_Jupiter.html': { url: 'Jupiter.html', text: 'ЮПІТЕР' }
+    };
+
+    // Перевіряємо, який файл зараз відкрито
+    for (const [key, route] of Object.entries(routes)) {
+        if (path.includes(key)) {
+            backBtn.href = route.url;
+            backBtn.innerHTML = `<span class="arrow">‹</span> ${route.text}`;
+            break; 
+        }
+    }
+    
+    // Якщо сторінка не знайдена в списку, ведемо на index.html за замовчуванням
+    if (backBtn.getAttribute('href') === '#') {
+        backBtn.href = 'index.html';
+        backBtn.innerHTML = `<span class="arrow">‹</span> MENU`;
+    }
+});
 
 window.onload = init;

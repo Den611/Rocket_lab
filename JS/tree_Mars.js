@@ -260,4 +260,32 @@ function closePanel() {
     document.querySelectorAll('.node, .line').forEach(el => el.classList.remove('highlight'));
 }
 
+document.addEventListener('DOMContentLoaded', () => {
+    const backBtn = document.getElementById('dynamic-back-btn');
+    const path = window.location.pathname; // Отримуємо поточну адресу
+    
+    // Об'єкт конфігурації: "де ми є" -> "куди йти"
+    const routes = {
+        'tree_Earth.html': { url: 'index.html', text: 'ГОЛОВНА' },
+        'tree_Moon.html':  { url: 'Moon.html',  text: 'МІСЯЦЬ' },
+        'tree_Mars.html':  { url: 'Mars.html',  text: 'МАРС' },
+        'tree_Jupiter.html': { url: 'Jupiter.html', text: 'ЮПІТЕР' }
+    };
+
+    // Перевіряємо, який файл зараз відкрито
+    for (const [key, route] of Object.entries(routes)) {
+        if (path.includes(key)) {
+            backBtn.href = route.url;
+            backBtn.innerHTML = `<span class="arrow">‹</span> ${route.text}`;
+            break; 
+        }
+    }
+    
+    // Якщо сторінка не знайдена в списку, ведемо на index.html за замовчуванням
+    if (backBtn.getAttribute('href') === '#') {
+        backBtn.href = 'index.html';
+        backBtn.innerHTML = `<span class="arrow">‹</span> MENU`;
+    }
+});
+
 window.onload = init;

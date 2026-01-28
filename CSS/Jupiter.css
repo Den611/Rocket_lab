@@ -30,22 +30,61 @@ body {
 
 /* --- ФОНОВИЙ КОНТЕЙНЕР (КОСМОС) --- */
 #space-container {
-    /* FIXED гарантує, що зорі не рухаються разом зі скролом сторінки */
-    position: fixed; 
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1; /* Глобально позаду всього контенту */
+    overflow: hidden;
+    background: #05070a; /* Колір підкладки, якщо картинка не завантажиться */
+}
+
+#space-container::before {
+    content: '';
+    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     
-    /* Відправляємо на задній план */
-    z-index: -1; 
+    /* Налаштування масштабування картинки */
+    background-size: cover; 
+    background-position: center;
+    background-repeat: no-repeat;
     
-    /* Колір космосу задаємо саме тут */
-    background-color: #05070a;
-    background: radial-gradient(circle at center, #1b2135 0%, #05070a 100%);
+    /* ЕФЕКТИ: Розмиття та Затемнення */
+    filter: blur(8px) brightness(0.4); 
     
-    /* Щоб зорі, які вилітають за межі, не розтягували екран */
-    overflow: hidden; 
+    /* Щоб краї розмиття не виходили білими, трохи збільшуємо шар */
+    transform: scale(1.1); 
+    
+    z-index: 0; /* Найнижчий шар всередині контейнера */
+}
+
+/* Градієнт поверх картинки, щоб додати глибини (Опціонально) */
+#space-container::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: radial-gradient(circle at center, transparent 0%, #05070a 90%);
+    z-index: 1;
+}
+
+.bg-earth::before {
+    background-image: url('/images/bg_earth.png'); /* Шлях до твого фото Землі */
+}
+
+.bg-moon::before {
+    background-image: url('/images/bg_moon.png');
+}
+
+.bg-mars::before {
+    background-image: url('/images/bg_mars.png');
+}
+
+.bg-jupiter::before {
+    background-image: url('/images/bg_jupiter.png');
 }
 
 /* --- ВИГЛЯД ЗІРКИ --- */
@@ -57,6 +96,7 @@ body {
     box-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
     /* Підключаємо анімацію */
     animation: spaceFlight linear infinite;
+    z-index: 2;
 }
 
 /* Блакитні зірки */
