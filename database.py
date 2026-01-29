@@ -133,6 +133,7 @@ class Database:
                 self.cursor.execute(query, (res_amount, family_id))
 
     def collect_resources(self, family_id, res1_col, amount1, res2_col, amount2):
+        MAX_STORAGE = 10000
         with self.connection:
             query = f"UPDATE res.storage SET {res1_col} = {res1_col} + ?, {res2_col} = {res2_col} + ? WHERE family_id = ?"
             self.cursor.execute(query, (amount1, amount2, family_id))

@@ -51,9 +51,27 @@ async def process_join_code(message: types.Message, state: FSMContext):
 async def family_info(message: types.Message):
     fid = db.get_user_family(message.from_user.id)
     if not fid: return
+
     data = db.get_family_resources(fid)
     base = db.get_family_info(fid)
-    text = f"🏢 **{base[0]}**\n💰 {data[0]}\n🌍 {data[11]}\n📦 Ресурси: {data[1]}/{data[2]} | {data[3]}/{data[4]} | {data[5]}/{data[6]} | {data[7]}/{data[8]}"
+    
+    MAX = 10000 
+
+    text = (
+        f"🏢 **{base[0]}**\n"
+        f"💰 {data[0]}\n"
+        f"🌍 {data[11]}\n"
+        f"━━━━━━━━━━━━━━━━━━━━━\n"
+        f"📦 **Склад ресурсів:**\n\n"
+        f"🔩 Залізо:  **{data[1]}/{MAX}**\n"
+        f"⛽ Паливо:  **{data[2]}/{MAX}**\n"
+        f"🌑 Реголіт: **{data[3]}/{MAX}**\n"
+        f"⚛️ Гелій-3: **{data[4]}/{MAX}**\n"
+        f"💾 Кремній: **{data[5]}/{MAX}**\n"
+        f"🧪 Оксид:   **{data[6]}/{MAX}**\n"
+        f"🌫 Водень:  **{data[7]}/{MAX}**\n"
+        f"🎈 Гелій:   **{data[8]}/{MAX}**"
+    )
     await message.answer(text, parse_mode="Markdown")
 
 
