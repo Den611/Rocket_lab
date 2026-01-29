@@ -332,3 +332,58 @@ body, html {
     box-shadow:
         inset 0 0 16px rgba(0, 0, 0, 0.6);
 }
+
+.cost-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 колонки */
+    gap: 10px;
+    margin: 20px 0;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(0, 242, 255, 0.2);
+    border-radius: 8px;
+    opacity: 0; /* Ховаємо, якщо нічого показувати */
+    transition: opacity 0.3s;
+}
+
+.cost-grid.visible {
+    opacity: 1; /* Показуємо, коли є ціна */
+}
+
+/* Окрема комірка ресурсу */
+.cost-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+/* Назва ресурсу (Іконка) */
+.cost-icon {
+    font-size: 18px;
+    margin-bottom: 5px;
+}
+
+/* Значення ціни */
+.cost-value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* Кольори для ресурсів (ті ж, що і в шапці) */
+.val-iron { color: #aebbc9; text-shadow: 0 0 5px rgba(174, 187, 201, 0.5); }
+.val-fuel { color: #ff9d00; text-shadow: 0 0 5px rgba(255, 157, 0, 0.5); }
+.val-coin { color: #00ff9d; text-shadow: 0 0 5px rgba(0, 255, 157, 0.5); }
+
+/* Якщо модуль вже куплено */
+.cost-owned-msg {
+    grid-column: 1 / -1; /* На всю ширину */
+    color: var(--cyan);
+    text-align: center;
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 2px;
+    font-size: 12px;
+    text-transform: uppercase;
+}

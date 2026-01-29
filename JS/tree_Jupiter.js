@@ -10,78 +10,97 @@ const NODE_WIDTH = 150;
 const NODE_HEIGHT = 145;
 
 const treeNodes = [
-    // === ГРУПА 1: ВЕРХНЯ (Асиметрична) ===
-    // 1. Старт
+    // =======================================================
+    // === ГРУПА 1: КОРПУС ТА МОДУЛІ (Основна гілка) ===
+    // Послідовність: Корпус -> Новий Корпус -> (Розвилка: Сонячні панелі АБО Бойовий відсік)
+    // =======================================================
+    
+    // 1. Старт (Корпус)
     { 
-        id: 'g1_start', name: 'Герметизація', tier: 'I', desc: 'Покращена ізоляція відсіку для захисту вантажу.', 
+        id: 'hull_start', name: 'Герметизація', tier: 'I', desc: 'Покращена ізоляція відсіку для захисту вантажу.', 
         x: 1000, y: 1000, 
         req: null, owned: true, img: 'images/Korpus.png' 
     },
-    // 2. Лінійне продовження (Точка розвилки)
+    // 2. Новий Корпус (Загальний етап)
     { 
-        id: 'g1_split', name: 'Processing', tier: 'II', desc: 'Процесор.', 
+        id: 'hull_mk2', name: 'Композитний Корпус', tier: 'II', desc: 'Полегшений сплав, що дозволяє нести більше обладнання.', 
         x: 1250, y: 1000, 
-        req: 'g1_start', owned: false, img: 'images/modules/ai.png' 
-    },
-    
-    // --- ВЕРХНЯ ГІЛКА (2 блоки) ---
-    { 
-        id: 'g1_up1', name: 'Logic Unit', tier: 'III', desc: 'Логіка.', 
-        x: 1500, y: 900, // Вгору
-        req: 'g1_split', owned: false, img: 'images/modules/quantum.png' 
-    },
-    { 
-        id: 'g1_up2', name: 'Adv. AI', tier: 'IV', desc: 'Вищий ШІ.', 
-        x: 1750, y: 900, // Вправо
-        req: 'g1_up1', owned: false, img: 'images/modules/ai.png' 
+        req: 'hull_start', owned: false, img: 'images/Korpus.png' 
     },
 
-    // --- НИЖНЯ ГІЛКА (3 блоки - довша) ---
+    // --- ГІЛКА А: ЕНЕРГЕТИКА (Сонячні панелі) ---
     { 
-        id: 'g1_down1', name: 'Hull Plating', tier: 'III', desc: 'Обшивка.', 
-        x: 1500, y: 1100, // Вниз
-        req: 'g1_split', owned: false, img: 'images/modules/body.png' 
+        id: 'solar_upg', name: 'Фотоелементи MK-2', tier: 'III', desc: 'Покращення ефективності збору енергії на 50%.', 
+        x: 1500, y: 850, // Вгору від корпусу
+        req: 'hull_mk2', owned: false, img: 'images/Bataries.png' 
     },
     { 
-        id: 'g1_down2', name: 'Armor Layer', tier: 'IV', desc: 'Броня.', 
-        x: 1750, y: 1100, // Вправо
-        req: 'g1_down1', owned: false, img: 'images/modules/shield.png' 
+        id: 'solar_max', name: 'Квантові Панелі', tier: 'IV', desc: 'Найкраща система поглинання світла. Майже нескінченна енергія.', 
+        x: 1750, y: 850, // Продовження верхньої гілки
+        req: 'solar_upg', owned: false, img: 'images/Bataries.png' 
+    },
+
+    // --- ГІЛКА Б: БОЙОВА (Відсіки та Гармати) ---
+    { 
+        id: 'aux_bay', name: 'Допоміжні Відсіки', tier: 'III', desc: 'Розширення простору для встановлення спецобладнання.', 
+        x: 1500, y: 1150, // Вниз від корпусу
+        req: 'hull_mk2', owned: false, img: 'images/Korpus.png' 
     },
     { 
-        id: 'g1_down3', name: 'Kinetic Shield', tier: 'V', desc: 'Кінетичний щит.', 
-        x: 2000, y: 1100, // Ще правіше (найдовша гілка)
-        req: 'g1_down2', owned: false, img: 'images/modules/shield.png' 
+        id: 'combat_bay', name: 'Бойовий Модуль', tier: 'IV', desc: 'Броньований відсік з системою наведення.', 
+        x: 1750, y: 1150, 
+        req: 'aux_bay', owned: false, img: 'images/Korpus.png' 
+    },
+    { 
+        id: 'cannons', name: 'Плазмові Гармати', tier: 'V', desc: 'Важке озброєння для знищення астероїдів та ворогів.', 
+        x: 2000, y: 1150, // Фінал нижньої гілки
+        req: 'combat_bay', owned: false, img: 'images/Blasters.png' 
     },
 
 
-    // === ГРУПА 2: СЕРЕДНЯ (Коротка розвилка) ===
+    // =======================================================
+    // === ГРУПА 2: ДВИГУНИ (Турбіна) ===
+    // Послідовність: Турбіна -> (Розвилка: Найкраща турбіна АБО Бокові турбіни)
+    // =======================================================
+
+    // 1. Старт (Турбіна)
     { 
-        id: 'g2_start', name: 'Покращений Форсаж', tier: 'I', desc: 'Оптимізована камера згоряння для економії палива.', 
-        x: 1000, y: 1450, 
+        id: 'eng_start', name: 'Форсаж', tier: 'I', desc: 'Базова оптимізація камери згоряння.', 
+        x: 1000, y: 1500, 
         req: null, owned: true, img: 'images/Turbina.png' 
     },
+
+    // --- ГІЛКА А: ГОЛОВНИЙ РУШІЙ ---
     { 
-        id: 'g2_up', name: 'Ion Thruster', tier: 'II', desc: 'Іон.', 
-        x: 1250, y: 1350, // Вгору
-        req: 'g2_start', owned: false, img: 'images/modules/booster.png' 
+        id: 'eng_ultimate', name: 'Гіпер-Турбіна', tier: 'IV', desc: 'Найкраща турбіна. Дозволяє досягти другої космічної швидкості.', 
+        x: 1300, y: 1400, // Вгору
+        req: 'eng_start', owned: false, img: 'images/Turbina.png' 
     },
+
+    // --- ГІЛКА Б: МАНЕВРОВІСТЬ ---
     { 
-        id: 'g2_down', name: 'Plasma Drive', tier: 'II', desc: 'Плазма.', 
-        x: 1250, y: 1550, // Вниз
-        req: 'g2_start', owned: false, img: 'images/modules/quantum.png' 
+        id: 'eng_side', name: 'Бокові Рушії', tier: 'II', desc: 'Покращення всіх маневрових двигунів для стабілізації.', 
+        x: 1300, y: 1600, // Вниз
+        req: 'eng_start', owned: false, img: 'images/Turbina.png' 
     },
 
 
-    // === ГРУПА 3: НИЖНЯ (Проста лінія) ===
+    // =======================================================
+    // === ГРУПА 3: НІС (Сенсори) ===
+    // Послідовність: Ніс -> Новий покращений ніс
+    // =======================================================
+
+    // 1. Старт (Ніс)
     { 
-        id: 'g3_start', name: 'Нова Верхівка', tier: 'I', desc: 'Посилений титановий конус для пробиття хмар.', 
-        x: 1000, y: 1800, 
+        id: 'nose_start', name: 'Титановий Конус', tier: 'I', desc: 'Посилений захист від тертя атмосфери.', 
+        x: 1000, y: 1850, 
         req: null, owned: true, img: 'images/Nose.png' 
     },
+    // 2. Фінал носа
     { 
-        id: 'g3_end', name: 'Cryo Stasis', tier: 'II', desc: 'Кріо.', 
-        x: 1250, y: 1800, 
-        req: 'g3_start', owned: false, img: 'images/modules/body.png' 
+        id: 'nose_adv', name: 'Аеро-Композит', tier: 'III', desc: 'Новий покращений ніс з вбудованими сенсорами дальньої дії.', 
+        x: 1300, y: 1850, // Пряма лінія
+        req: 'nose_start', owned: false, img: 'images/Nose.png' 
     }
 ];
 

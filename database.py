@@ -3,15 +3,18 @@ import random
 import string
 import datetime
 
-
 class Database:
     def __init__(self, db_file):
         self.connection = sqlite3.connect(db_file)
         self.cursor = self.connection.cursor()
+        
+        # 🔥 МАГІЯ: Підключаємо другу базу даних як 'res'
+        self.cursor.execute("ATTACH DATABASE 'resourses.db' AS res")
+        
         self.create_tables()
 
     def create_tables(self):
-        # 1. Сім'ї
+        # 1. Сім'ї (У 'space.db' залишаємо тільки гроші і прогрес)
         self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS families (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -23,28 +26,32 @@ class Database:
                 hull_lvl INTEGER DEFAULT 1,
                 current_planet TEXT DEFAULT 'Earth',
 
-                -- РЕСУРСИ
-                res_iron INTEGER DEFAULT 0, res_fuel INTEGER DEFAULT 0,
-                res_regolith INTEGER DEFAULT 0, res_he3 INTEGER DEFAULT 0,
-                res_silicon INTEGER DEFAULT 0, res_oxide INTEGER DEFAULT 0,
-                res_hydrogen INTEGER DEFAULT 0, res_helium INTEGER DEFAULT 0,
-
-                -- ІНФРАСТРУКТУРА
                 mine_lvl INTEGER DEFAULT 0,
                 last_collection DATETIME DEFAULT CURRENT_TIMESTAMP,
 
-                -- ТАЙМЕРИ
                 mission_end_time DATETIME DEFAULT NULL,
                 active_launch_id INTEGER DEFAULT NULL,
                 active_mission_id INTEGER DEFAULT NULL,
                 upgrade_end_time DATETIME DEFAULT NULL,
 
-                -- PvP (НОВЕ)
                 last_raid_time DATETIME DEFAULT NULL,
                 shield_until DATETIME DEFAULT NULL
             )
         """)
-        # 2. Користувачі
+        
+        # 2. Таблиця ресурсів у другій базі (якщо раптом не створена)
+        self.cursor.execute("""
+            CREATE TABLE IF NOT EXISTS res.storage (
+                family_id INTEGER PRIMARY KEY,
+                res_iron INTEGER DEFAULT 0, res_fuel INTEGER DEFAULT 0,
+                res_regolith INTEGER DEFAULT 0, res_he3 INTEGER DEFAULT 0,
+                res_silicon INTEGER DEFAULT 0, res_oxide INTEGER DEFAULT 0,
+                res_hydrogen INTEGER DEFAULT 0, res_helium INTEGER DEFAULT 0,
+                bonus_received BOOLEAN DEFAULT 0
+            )
+        """)
+
+        # 3. Інші таблиці (Користувачі, Місії, Запуски) - без змін
         self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 user_id INTEGER PRIMARY KEY,
@@ -54,7 +61,6 @@ class Database:
                 FOREIGN KEY(family_id) REFERENCES families(id)
             )
         """)
-        # 3. Місії (З НОВИМИ КОЛОНКАМИ flight_time та pirate_risk)
         self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS missions (
                 id INTEGER PRIMARY KEY,
@@ -67,13 +73,10 @@ class Database:
                 cost_money INTEGER DEFAULT 0,
                 req_res_name TEXT DEFAULT NULL,
                 req_res_amount INTEGER DEFAULT 0,
-
-                -- НОВІ ПАРАМЕТРИ
                 flight_time INTEGER DEFAULT 10,
                 pirate_risk INTEGER DEFAULT 10
             )
         """)
-        # 4. Запуски
         self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS launches (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -88,137 +91,86 @@ class Database:
         """)
         self.connection.commit()
 
-    # --- МЕТОДИ (ОНОВЛЕНО) ---
+    # --- МЕТОДИ ДЛЯ РОБОТИ З ДВОМА БАЗАМИ ---
 
-    # Додано flight_time та pirate_risk
-    def add_mission(self, name, description, difficulty, reward, planet, is_boss, cost_money=0, req_res=None, req_amt=0,
-                    flight_time=10, pirate_risk=10):
+    def create_family(self, user_id, family_name):
+        invite_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
         with self.connection:
-            self.cursor.execute("""
-                INSERT INTO missions (name, description, difficulty, reward, planet, is_boss_mission, cost_money, req_res_name, req_res_amount, flight_time, pirate_risk) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (name, description, difficulty, reward, planet, is_boss, cost_money, req_res, req_amt, flight_time,
-                  pirate_risk))
+            # 1. Створюємо сім'ю в основній базі
+            self.cursor.execute("INSERT INTO families (name, invite_code, balance) VALUES (?, ?, 1000)",
+                                (family_name, invite_code))
+            family_id = self.cursor.lastrowid
+            
+            # 2. Створюємо запис в resourses.db
+            self.cursor.execute("INSERT INTO res.storage (family_id) VALUES (?)", (family_id,))
+            
+            self.cursor.execute("UPDATE users SET family_id = ?, role = 'captain' WHERE user_id = ?",
+                                (family_id, user_id))
+            return invite_code
 
-    # Тепер повертає також flight_time і pirate_risk
-    def get_missions_by_planet(self, planet_name):
+    def get_family_resources(self, family_id):
         with self.connection:
+            # Об'єднуємо дані з двох баз (JOIN)
             return self.cursor.execute("""
-                SELECT id, name, description, reward, is_boss_mission, cost_money, flight_time, pirate_risk 
-                FROM missions WHERE planet = ?
-            """, (planet_name,)).fetchall()
+                SELECT 
+                    f.balance, 
+                    r.res_iron, r.res_fuel, r.res_regolith, r.res_he3, 
+                    r.res_silicon, r.res_oxide, r.res_hydrogen, r.res_helium, 
+                    f.mine_lvl, f.last_collection, f.current_planet 
+                FROM families f
+                LEFT JOIN res.storage r ON f.id = r.family_id
+                WHERE f.id = ?
+            """, (family_id,)).fetchone()
 
-    def get_mission_by_id(self, mission_id):
+    def deduct_resources(self, family_id, money, res_name=None, res_amount=0):
         with self.connection:
-            return self.cursor.execute("SELECT * FROM missions WHERE id = ?", (mission_id,)).fetchone()
+            if money > 0:
+                self.cursor.execute("UPDATE families SET balance = balance - ? WHERE id = ?", (money, family_id))
+            
+            if res_name and res_amount > 0:
+                # Звертаємось до таблиці res.storage
+                query = f"UPDATE res.storage SET {res_name} = {res_name} - ? WHERE family_id = ?"
+                self.cursor.execute(query, (res_amount, family_id))
 
-    # --- PvP ТА ІНШІ ---
-
-    def get_family_power(self, family_id):
+    def collect_resources(self, family_id, res1_col, amount1, res2_col, amount2):
         with self.connection:
-            row = self.cursor.execute("SELECT engine_lvl, hull_lvl, mine_lvl FROM families WHERE id = ?",
-                                      (family_id,)).fetchone()
-            if row: return row[0] + row[1] + int(row[2] / 2)
-            return 0
-
-    def get_random_enemy(self, my_family_id):
-        with self.connection:
-            return self.cursor.execute("""
-                SELECT id, name, balance, hull_lvl, current_planet 
-                FROM families 
-                WHERE id != ? 
-                  AND current_planet NOT IN ('Earth', 'Moon')
-                  AND (shield_until IS NULL OR shield_until <= CURRENT_TIMESTAMP)
-                ORDER BY RANDOM() LIMIT 1
-            """, (my_family_id,)).fetchone()
-
-    def get_all_families_for_events(self):
-        with self.connection:
-            return self.cursor.execute(
-                "SELECT id, current_planet, hull_lvl, engine_lvl, balance FROM families").fetchall()
-
-    def set_raid_cooldown(self, fid, mins):
-        t = datetime.datetime.now() + datetime.timedelta(minutes=mins)
-        with self.connection: self.cursor.execute("UPDATE families SET last_raid_time = ? WHERE id = ?", (t, fid))
-
-    def get_last_raid(self, fid):
-        with self.connection:
-            r = self.cursor.execute("SELECT last_raid_time FROM families WHERE id = ?", (fid,)).fetchone()
-            return r[0] if r else None
-
-    def set_shield(self, fid, mins):
-        t = datetime.datetime.now() + datetime.timedelta(minutes=mins)
-        with self.connection: self.cursor.execute("UPDATE families SET shield_until = ? WHERE id = ?", (t, fid))
-
-    # --- СТАНДАРТНІ МЕТОДИ ---
-
-    def get_timers(self, family_id):
-        with self.connection:
-            return self.cursor.execute(
-                "SELECT mission_end_time, active_launch_id, active_mission_id, upgrade_end_time FROM families WHERE id = ?",
-                (family_id,)).fetchone()
-
-    def set_mission_timer(self, family_id, minutes, launch_id, mission_id):
-        end_time = datetime.datetime.now() + datetime.timedelta(minutes=minutes)
-        with self.connection:
-            self.cursor.execute(
-                "UPDATE families SET mission_end_time = ?, active_launch_id = ?, active_mission_id = ? WHERE id = ?",
-                (end_time, launch_id, mission_id, family_id))
-
-    def clear_mission_timer(self, family_id):
-        with self.connection:
-            self.cursor.execute(
-                "UPDATE families SET mission_end_time = NULL, active_launch_id = NULL, active_mission_id = NULL WHERE id = ?",
-                (family_id,))
-
-    def set_upgrade_timer(self, family_id, minutes):
-        end_time = datetime.datetime.now() + datetime.timedelta(minutes=minutes)
-        with self.connection:
-            self.cursor.execute("UPDATE families SET upgrade_end_time = ? WHERE id = ?", (end_time, family_id))
-
-    def finish_upgrade(self, family_id):
-        with self.connection:
-            self.cursor.execute(
-                "UPDATE families SET mine_lvl = mine_lvl + 1, last_collection = CURRENT_TIMESTAMP, upgrade_end_time = NULL WHERE id = ?",
-                (family_id,))
-
-    def get_expired_missions(self):
-        with self.connection:
-            return self.cursor.execute(
-                "SELECT id, active_mission_id, active_launch_id, current_planet FROM families WHERE mission_end_time <= CURRENT_TIMESTAMP AND mission_end_time IS NOT NULL").fetchall()
-
-    def get_expired_upgrades(self):
-        with self.connection:
-            return self.cursor.execute(
-                "SELECT id, current_planet, mine_lvl FROM families WHERE upgrade_end_time <= CURRENT_TIMESTAMP AND upgrade_end_time IS NOT NULL").fetchall()
-
-    def get_family_user_ids(self, family_id):
-        with self.connection:
-            res = self.cursor.execute("SELECT user_id FROM users WHERE family_id = ?", (family_id,)).fetchall()
-            return [row[0] for row in res]
-
-    def admin_skip_timers(self, family_id):
-        with self.connection:
-            past_time = datetime.datetime.now() - datetime.timedelta(minutes=1)
-            self.cursor.execute(
-                "UPDATE families SET mission_end_time = ? WHERE id = ? AND mission_end_time IS NOT NULL",
-                (past_time, family_id))
-            self.cursor.execute(
-                "UPDATE families SET upgrade_end_time = ? WHERE id = ? AND upgrade_end_time IS NOT NULL",
-                (past_time, family_id))
+            query = f"UPDATE res.storage SET {res1_col} = {res1_col} + ?, {res2_col} = {res2_col} + ? WHERE family_id = ?"
+            self.cursor.execute(query, (amount1, amount2, family_id))
+            self.cursor.execute("UPDATE families SET last_collection = CURRENT_TIMESTAMP WHERE id = ?", (family_id,))
 
     def admin_add_resources(self, family_id):
         with self.connection:
+            self.cursor.execute("UPDATE families SET balance = balance + 50000 WHERE id = ?", (family_id,))
             self.cursor.execute("""
-                UPDATE families SET 
-                balance = balance + 50000,
+                UPDATE res.storage SET 
                 res_iron = res_iron + 1000, res_fuel = res_fuel + 1000,
                 res_regolith = res_regolith + 1000, res_he3 = res_he3 + 1000,
                 res_silicon = res_silicon + 1000, res_oxide = res_oxide + 1000,
                 res_hydrogen = res_hydrogen + 1000, res_helium = res_helium + 1000
-                WHERE id = ?
+                WHERE family_id = ?
             """, (family_id,))
 
+    # --- НОВИЙ МЕТОД ДЛЯ БОНУСА ---
+    def claim_bonus(self, family_id, amount=100):
+        with self.connection:
+            # Перевіряємо в resourses.db
+            row = self.cursor.execute("SELECT bonus_received FROM res.storage WHERE family_id = ?", (family_id,)).fetchone()
+            if row and row[0]: # Якщо 1 (True)
+                return False
+            
+            # Нараховуємо ресурси
+            self.cursor.execute(f"""
+                UPDATE res.storage SET 
+                res_iron = res_iron + {amount}, res_fuel = res_fuel + {amount},
+                res_regolith = res_regolith + {amount}, res_he3 = res_he3 + {amount},
+                res_silicon = res_silicon + {amount}, res_oxide = res_oxide + {amount},
+                res_hydrogen = res_hydrogen + {amount}, res_helium = res_helium + {amount},
+                bonus_received = 1
+                WHERE family_id = ?
+            """, (family_id,))
+            return True
+
+    # --- СТАНДАРТНІ МЕТОДИ (Без змін, але потрібні для роботи) ---
     def user_exists(self, user_id):
         with self.connection:
             return bool(self.cursor.execute("SELECT * FROM users WHERE user_id = ?", (user_id,)).fetchall())
@@ -232,16 +184,6 @@ class Database:
         with self.connection:
             res = self.cursor.execute("SELECT family_id FROM users WHERE user_id = ?", (user_id,)).fetchone()
             return res[0] if res else None
-
-    def create_family(self, user_id, family_name):
-        invite_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
-        with self.connection:
-            self.cursor.execute("INSERT INTO families (name, invite_code, balance) VALUES (?, ?, 1000)",
-                                (family_name, invite_code))
-            family_id = self.cursor.lastrowid
-            self.cursor.execute("UPDATE users SET family_id = ?, role = 'captain' WHERE user_id = ?",
-                                (family_id, user_id))
-            return invite_code
 
     def join_family(self, user_id, invite_code):
         with self.connection:
@@ -265,36 +207,36 @@ class Database:
         with self.connection:
             self.cursor.execute("UPDATE users SET family_id = NULL, role = 'recruit' WHERE user_id = ?", (user_id,))
 
-    def get_family_resources(self, family_id):
-        with self.connection:
-            return self.cursor.execute(
-                "SELECT balance, res_iron, res_fuel, res_regolith, res_he3, res_silicon, res_oxide, res_hydrogen, res_helium, mine_lvl, last_collection, current_planet FROM families WHERE id = ?",
-                (family_id,)).fetchone()
-
-    def deduct_resources(self, family_id, money, res_name=None, res_amount=0):
-        with self.connection:
-            self.cursor.execute("UPDATE families SET balance = balance - ? WHERE id = ?", (money, family_id))
-            if res_name and res_amount > 0:
-                query = f"UPDATE families SET {res_name} = {res_name} - ? WHERE id = ?"
-                self.cursor.execute(query, (res_amount, family_id))
-
     def update_balance(self, family_id, amount):
         with self.connection:
             self.cursor.execute("UPDATE families SET balance = balance + ? WHERE id = ?", (amount, family_id))
 
-    def collect_resources(self, family_id, res1_col, amount1, res2_col, amount2):
-        with self.connection:
-            query = f"UPDATE families SET {res1_col} = {res1_col} + ?, {res2_col} = {res2_col} + ?, last_collection = CURRENT_TIMESTAMP WHERE id = ?"
-            self.cursor.execute(query, (amount1, amount2, family_id))
-
     def move_family_to_planet(self, family_id, new_planet):
         with self.connection:
-            self.cursor.execute("UPDATE families SET current_planet = ?, mine_lvl = 0 WHERE id = ?",
-                                (new_planet, family_id))
+            self.cursor.execute("UPDATE families SET current_planet = ?, mine_lvl = 0 WHERE id = ?", (new_planet, family_id))
 
     def update_upgrade(self, family_id, upgrade_type):
         with self.connection:
             self.cursor.execute(f"UPDATE families SET {upgrade_type} = {upgrade_type} + 1 WHERE id = ?", (family_id,))
+
+    # Методи місій та запусків
+    def add_mission(self, name, description, difficulty, reward, planet, is_boss, cost_money=0, req_res=None, req_amt=0, flight_time=10, pirate_risk=10):
+        with self.connection:
+            self.cursor.execute("""
+                INSERT INTO missions (name, description, difficulty, reward, planet, is_boss_mission, cost_money, req_res_name, req_res_amount, flight_time, pirate_risk) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (name, description, difficulty, reward, planet, is_boss, cost_money, req_res, req_amt, flight_time, pirate_risk))
+
+    def get_missions_by_planet(self, planet_name):
+        with self.connection:
+            return self.cursor.execute("""
+                SELECT id, name, description, reward, is_boss_mission, cost_money, flight_time, pirate_risk 
+                FROM missions WHERE planet = ?
+            """, (planet_name,)).fetchall()
+
+    def get_mission_by_id(self, mission_id):
+        with self.connection:
+            return self.cursor.execute("SELECT * FROM missions WHERE id = ?", (mission_id,)).fetchone()
 
     def start_launch(self, family_id, mission_id):
         with self.connection:
@@ -315,3 +257,79 @@ class Database:
     def update_launch_status(self, launch_id, status):
         with self.connection:
             self.cursor.execute("UPDATE launches SET status = ? WHERE id = ?", (status, launch_id))
+
+    def get_timers(self, family_id):
+        with self.connection:
+            return self.cursor.execute("SELECT mission_end_time, active_launch_id, active_mission_id, upgrade_end_time FROM families WHERE id = ?", (family_id,)).fetchone()
+
+    def set_mission_timer(self, family_id, minutes, launch_id, mission_id):
+        end_time = datetime.datetime.now() + datetime.timedelta(minutes=minutes)
+        with self.connection:
+            self.cursor.execute("UPDATE families SET mission_end_time = ?, active_launch_id = ?, active_mission_id = ? WHERE id = ?", (end_time, launch_id, mission_id, family_id))
+
+    def clear_mission_timer(self, family_id):
+        with self.connection:
+            self.cursor.execute("UPDATE families SET mission_end_time = NULL, active_launch_id = NULL, active_mission_id = NULL WHERE id = ?", (family_id,))
+
+    def set_upgrade_timer(self, family_id, minutes):
+        end_time = datetime.datetime.now() + datetime.timedelta(minutes=minutes)
+        with self.connection:
+            self.cursor.execute("UPDATE families SET upgrade_end_time = ? WHERE id = ?", (end_time, family_id))
+
+    def finish_upgrade(self, family_id):
+        with self.connection:
+            self.cursor.execute("UPDATE families SET mine_lvl = mine_lvl + 1, last_collection = CURRENT_TIMESTAMP, upgrade_end_time = NULL WHERE id = ?", (family_id,))
+
+    def get_expired_missions(self):
+        with self.connection:
+            return self.cursor.execute("SELECT id, active_mission_id, active_launch_id, current_planet FROM families WHERE mission_end_time <= CURRENT_TIMESTAMP AND mission_end_time IS NOT NULL").fetchall()
+
+    def get_expired_upgrades(self):
+        with self.connection:
+            return self.cursor.execute("SELECT id, current_planet, mine_lvl FROM families WHERE upgrade_end_time <= CURRENT_TIMESTAMP AND upgrade_end_time IS NOT NULL").fetchall()
+
+    def get_family_user_ids(self, family_id):
+        with self.connection:
+            res = self.cursor.execute("SELECT user_id FROM users WHERE family_id = ?", (family_id,)).fetchall()
+            return [row[0] for row in res]
+            
+    def admin_skip_timers(self, family_id):
+        with self.connection:
+            past_time = datetime.datetime.now() - datetime.timedelta(minutes=1)
+            self.cursor.execute("UPDATE families SET mission_end_time = ? WHERE id = ? AND mission_end_time IS NOT NULL", (past_time, family_id))
+            self.cursor.execute("UPDATE families SET upgrade_end_time = ? WHERE id = ? AND upgrade_end_time IS NOT NULL", (past_time, family_id))
+
+    # PvP методи
+    def get_family_power(self, family_id):
+        with self.connection:
+            row = self.cursor.execute("SELECT engine_lvl, hull_lvl, mine_lvl FROM families WHERE id = ?", (family_id,)).fetchone()
+            if row: return row[0] + row[1] + int(row[2] / 2)
+            return 0
+
+    def get_random_enemy(self, my_family_id):
+        with self.connection:
+            return self.cursor.execute("""
+                SELECT id, name, balance, hull_lvl, current_planet 
+                FROM families 
+                WHERE id != ? 
+                  AND current_planet NOT IN ('Earth', 'Moon')
+                  AND (shield_until IS NULL OR shield_until <= CURRENT_TIMESTAMP)
+                ORDER BY RANDOM() LIMIT 1
+            """, (my_family_id,)).fetchone()
+
+    def get_all_families_for_events(self):
+        with self.connection:
+            return self.cursor.execute("SELECT id, current_planet, hull_lvl, engine_lvl, balance FROM families").fetchall()
+
+    def set_raid_cooldown(self, fid, mins):
+        t = datetime.datetime.now() + datetime.timedelta(minutes=mins)
+        with self.connection: self.cursor.execute("UPDATE families SET last_raid_time = ? WHERE id = ?", (t, fid))
+
+    def get_last_raid(self, fid):
+        with self.connection:
+            r = self.cursor.execute("SELECT last_raid_time FROM families WHERE id = ?", (fid,)).fetchone()
+            return r[0] if r else None
+
+    def set_shield(self, fid, mins):
+        t = datetime.datetime.now() + datetime.timedelta(minutes=mins)
+        with self.connection: self.cursor.execute("UPDATE families SET shield_until = ? WHERE id = ?", (t, fid))
