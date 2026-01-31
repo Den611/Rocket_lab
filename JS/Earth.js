@@ -161,40 +161,48 @@ function initInteractions() {
 }
 
 function refreshInfoPanel(key) {
-    const data = modulesData[key]; 
-    const level = rocketState[key]; 
+    const currentLevel = rocketState[key] || 0;
+    const nodes = window.treeNodes || []; 
     
+    // Шукаємо дані саме для ПОТОЧНОГО рівня цього модуля
+    const activeNode = nodes.find(n => n.rocketKey === key && n.level === currentLevel);
+    
+    // Шукаємо дані для НАСТУПНОГО рівня (щоб показати ціну апгрейду)
+    const nextNode = nodes.find(n => n.rocketKey === key && n.level === currentLevel + 1);
+
     const pTitle = document.getElementById('panelTitle');
     const pDesc = document.getElementById('panelDesc');
-    const barIntegrity = document.getElementById('barIntegrity');
-    const valIntegrity = document.getElementById('statIntegrity');
-    const barLevel = document.getElementById('barLevel');
-    const levelText = document.getElementById('statLevel');
-    
-    let displayName = data.title;
-    let displayDesc = data.desc;
-    let integrity = data.integrity;
-    
-    if (level === 0) {
-        displayName += " (Locked)";
-        displayDesc = "Module not acquired yet. Visit Tech Tree.";
-        integrity = 0;
-    } else if (level === 2) {
-        displayName += " MK-II";
-        displayDesc += " [UPGRADED]";
-        integrity = 100;
+    const btn = document.querySelector('.upgrade-btn');
+
+    if (activeNode) {
+        // Оновлюємо назву та опис з масиву
+        pTitle.innerText = activeNode.name.toUpperCase();
+        pDesc.innerText = activeNode.desc;
+        
+        // ЛОГІКА КНОПКИ (Замість "INSTALLING")
+        if (nextNode) {
+            // Якщо є куди качати — показуємо ціну наступного рівня
+            const cost = nextNode.cost;
+            btn.innerText = `UPGRADE: ${cost.iron}🔩 | ${cost.coins}🪙`;
+            btn.style.display = 'block';
+            btn.disabled = false;
+        } else {
+            // Якщо це макс. рівень
+            btn.innerText = "MAX LEVEL REACHED";
+            btn.disabled = true;
+            btn.style.background = "var(--accent-green)";
+        }
+    } else {
+        // Якщо модуль взагалі не куплений (Level 0)
+        pTitle.innerText = "LOCKED MODULE";
+        pDesc.innerText = "Дослідіть цей модуль у дереві розробок.";
+        btn.innerText = "GO TO TECH TREE";
     }
 
-    pTitle.innerText = displayName;
-    pDesc.innerText = displayDesc;
-    barIntegrity.style.width = `${integrity}%`;
-    valIntegrity.innerText = `${integrity}%`;
-    
-    const levelPercent = (level / 2) * 100;
-    barLevel.style.width = `${levelPercent}%`;
-    levelText.innerText = level === 0 ? "NONE" : `MK-${level}`;
-
-    updateButtonState(level);
+    // Оновлення прогрес-барів
+    const levelPercent = (currentLevel / 2) * 100;
+    document.getElementById('barLevel').style.width = `${levelPercent}%`;
+    document.getElementById('statLevel').innerText = `MK-${currentLevel}`;
 }
 
 // --- НАВІГАЦІЯ ---

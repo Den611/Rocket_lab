@@ -19,42 +19,49 @@ const treeNodes = [
     { 
         id: 'hull_start', name: 'Герметизація', tier: 'I', desc: 'Покращена ізоляція відсіку для захисту вантажу.', 
         x: 1000, y: 1000, 
-        req: null, owned: true, img: 'images/Korpus.png' 
+        req: null, owned: true, img: 'images/Korpus.png',
+        cost: { iron: 0, fuel: 0, coins: 0 }
     },
     // 2. Новий Корпус (Загальний етап)
     { 
         id: 'hull_mk2', name: 'Композитний Корпус', tier: 'II', desc: 'Полегшений сплав, що дозволяє нести більше обладнання.', 
         x: 1250, y: 1000, 
-        req: 'hull_start', owned: false, img: 'images/Korpus.png' 
+        req: 'hull_start', owned: false, img: 'images/Korpus.png',
+        cost: { iron: 700, fuel: 300, coins: 550 }
     },
 
     // --- ГІЛКА А: ЕНЕРГЕТИКА (Сонячні панелі) ---
     { 
         id: 'solar_upg', name: 'Фотоелементи MK-2', tier: 'III', desc: 'Покращення ефективності збору енергії на 50%.', 
         x: 1500, y: 850, // Вгору від корпусу
-        req: 'hull_mk2', owned: false, img: 'images/Bataries.png' 
+        req: 'hull_mk2', owned: false, img: 'images/Bataries.png',
+        cost: { iron: 400, fuel: 200, coins: 600 }
     },
     { 
         id: 'solar_max', name: 'Квантові Панелі', tier: 'IV', desc: 'Найкраща система поглинання світла. Майже нескінченна енергія.', 
         x: 1750, y: 850, // Продовження верхньої гілки
-        req: 'solar_upg', owned: false, img: 'images/Bataries.png' 
+        req: 'solar_upg', owned: false, img: 'images/Bataries.png',
+        cost: { iron: 200, fuel: 500, coins: 800 }
     },
 
     // --- ГІЛКА Б: БОЙОВА (Відсіки та Гармати) ---
     { 
         id: 'aux_bay', name: 'Допоміжні Відсіки', tier: 'III', desc: 'Розширення простору для встановлення спецобладнання.', 
         x: 1500, y: 1150, // Вниз від корпусу
-        req: 'hull_mk2', owned: false, img: 'images/Korpus.png' 
+        req: 'hull_mk2', owned: false, img: 'images/Korpus.png',
+        cost: { iron: 600, fuel: 200, coins: 500 }
     },
     { 
         id: 'combat_bay', name: 'Бойовий Модуль', tier: 'IV', desc: 'Броньований відсік з системою наведення.', 
         x: 1750, y: 1150, 
-        req: 'aux_bay', owned: false, img: 'images/Korpus.png' 
+        req: 'aux_bay', owned: false, img: 'images/Korpus.png',
+        cost: { iron: 800, fuel: 300, coins: 750 }
     },
     { 
         id: 'cannons', name: 'Плазмові Гармати', tier: 'V', desc: 'Важке озброєння для знищення астероїдів та ворогів.', 
         x: 2000, y: 1150, // Фінал нижньої гілки
-        req: 'combat_bay', owned: false, img: 'images/Blasters.png' 
+        req: 'combat_bay', owned: false, img: 'images/Blasters.png',
+        cost: { iron: 500, fuel: 400, coins: 1000 }
     },
 
 
@@ -67,21 +74,24 @@ const treeNodes = [
     { 
         id: 'eng_start', name: 'Форсаж', tier: 'I', desc: 'Базова оптимізація камери згоряння.', 
         x: 1000, y: 1500, 
-        req: null, owned: true, img: 'images/Turbina.png' 
+        req: null, owned: true, img: 'images/Turbina.png',
+        cost: { iron: 0, fuel: 0, coins: 0 }
     },
 
     // --- ГІЛКА А: ГОЛОВНИЙ РУШІЙ ---
     { 
         id: 'eng_ultimate', name: 'Гіпер-Турбіна', tier: 'IV', desc: 'Найкраща турбіна. Дозволяє досягти другої космічної швидкості.', 
         x: 1300, y: 1400, // Вгору
-        req: 'eng_start', owned: false, img: 'images/Turbina.png' 
+        req: 'eng_start', owned: false, img: 'images/Turbina.png',
+        cost: { iron: 350, fuel: 500, coins: 900 }
     },
 
     // --- ГІЛКА Б: МАНЕВРОВІСТЬ ---
     { 
         id: 'eng_side', name: 'Бокові Рушії', tier: 'II', desc: 'Покращення всіх маневрових двигунів для стабілізації.', 
         x: 1300, y: 1600, // Вниз
-        req: 'eng_start', owned: false, img: 'images/Turbina.png' 
+        req: 'eng_start', owned: false, img: 'images/Turbina.png',
+        cost: { iron: 300, fuel: 250, coins: 400 }
     },
 
 
@@ -94,13 +104,15 @@ const treeNodes = [
     { 
         id: 'nose_start', name: 'Титановий Конус', tier: 'I', desc: 'Посилений захист від тертя атмосфери.', 
         x: 1000, y: 1850, 
-        req: null, owned: true, img: 'images/Nose.png' 
+        req: null, owned: true, img: 'images/Nose.png',
+        cost: { iron: 0, fuel: 0, coins: 0 }
     },
     // 2. Фінал носа
     { 
         id: 'nose_adv', name: 'Аеро-Композит', tier: 'III', desc: 'Новий покращений ніс з вбудованими сенсорами дальньої дії.', 
         x: 1300, y: 1850, // Пряма лінія
-        req: 'nose_start', owned: false, img: 'images/Nose.png' 
+        req: 'nose_start', owned: false, img: 'images/Nose.png',
+        cost: { iron: 250, fuel: 200, coins: 550 }
     }
 ];
 
@@ -237,11 +249,37 @@ function openPanel(node) {
     const img = document.getElementById('node-image');
     img.src = node.img || 'images/modules/placeholder.png';
 
+    // === ЛОГІКА ВІДОБРАЖЕННЯ ЦІНИ ===
+    const costContainer = document.getElementById('node-cost');
+    
+    if (node.owned) {
+        costContainer.innerHTML = '<div class="cost-owned-msg">ВЖЕ ВСТАНОВЛЕНО</div>';
+        costContainer.classList.add('visible');
+    } else {
+        const c = node.cost || { iron: 0, fuel: 0, coins: 0 };
+        
+        costContainer.innerHTML = `
+            <div class="cost-cell">
+                <span class="cost-icon">☁️</span>
+                <span class="cost-value val-iron">${c.iron}</span>
+            </div>
+            <div class="cost-cell">
+                <span class="cost-icon">🎈</span>
+                <span class="cost-value val-fuel">${c.fuel}</span>
+            </div>
+            <div class="cost-cell">
+                <span class="cost-icon">🪙</span>
+                <span class="cost-value val-coin">${c.coins}</span>
+            </div>
+        `;
+        costContainer.classList.add('visible');
+    }
+
     // 🔘 Кнопка дослідження
     const btn = document.querySelector('.action-btn');
 
     if (node.owned) {
-        btn.textContent = 'ДОСЛІДЖЕНО';
+        btn.textContent = 'В АНГАРІ';
         btn.classList.add('disabled');
         btn.disabled = true;
     } else {

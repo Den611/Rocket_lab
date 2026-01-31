@@ -16,24 +16,28 @@ const treeNodes = [
     { 
         id: 'root1', name: 'Сталевий Корпус', tier: 'I', desc: 'Базова основа ракети.', 
         x: 1000, y: 1100, 
-        req: null, owned: true, img: 'images/Korpus.png' 
+        req: null, owned: true, img: 'images/Korpus.png',
+        cost: { iron: 0, fuel: 0, coins: 0 }
     },
     // Верхня гілка (Додатковий відділ -> Сонячні панелі)
     { 
         id: 'branch1_up1', name: 'Вантажний Відсік', tier: 'II', desc: 'Додатковий модуль.', 
         x: 1300, y: 1000, 
-        req: 'root1', owned: false, img: 'images/Korpus.png' 
+        req: 'root1', owned: false, img: 'images/Korpus.png',
+        cost: { iron: 400, fuel: 200, coins: 350 }
     },
     { 
         id: 'branch1_up2', name: 'Сонячні Панелі', tier: 'III', desc: 'Генерація енергії.', 
         x: 1600, y: 1000, 
-        req: 'branch1_up1', owned: false, img: 'images/Bataries.png' 
+        req: 'branch1_up1', owned: false, img: 'images/Bataries.png',
+        cost: { iron: 300, fuel: 100, coins: 450 }
     },
     // Нижня гілка (Надкрилки)
     { 
         id: 'branch1_down1', name: 'Аеро-надкрилки', tier: 'II', desc: 'Стабілізація польоту.', 
         x: 1300, y: 1200, 
-        req: 'root1', owned: false, img: 'images/Stabilizator.png' 
+        req: 'root1', owned: false, img: 'images/Stabilizator.png',
+        cost: { iron: 250, fuel: 150, coins: 300 }
     },
 
     // === ГРУПА 2: Двигуни (Турбіна -> Покращення або Бокові) ===
@@ -41,31 +45,36 @@ const treeNodes = [
     { 
         id: 'root2', name: 'Турбо-нагнітач', tier: 'I', desc: 'Подвійна система нагнітання для максимальної тяги двигуна.', 
         x: 1000, y: 1550, 
-        req: null, owned: true, img: 'images/Turbina.png' 
+        req: null, owned: true, img: 'images/Turbina.png',
+        cost: { iron: 0, fuel: 0, coins: 0 }
     },
     // Верхнє відгалуження (Покращена турбіна)
     { 
         id: 'branch2_up', name: 'Турбо-Форсаж', tier: 'II', desc: 'Покращена турбіна.', 
         x: 1300, y: 1450, 
-        req: 'root2', owned: false, img: 'images/Turbina.png' 
+        req: 'root2', owned: false, img: 'images/Turbina.png',
+        cost: { iron: 500, fuel: 400, coins: 600 }
     },
     // Нижнє відгалуження (Бокові турбіни)
     { 
         id: 'branch2_down', name: 'Бокові Рушії', tier: 'II', desc: 'Маневрені турбіни.', 
         x: 1300, y: 1650, 
-        req: 'root2', owned: false, img: 'images/Turbina.png' 
+        req: 'root2', owned: false, img: 'images/Turbina.png',
+        cost: { iron: 350, fuel: 250, coins: 400 }
     },
 
     // === ГРУПА 3: Верхівка (Верхівка -> Покращення) ===
     { 
         id: 'root3', name: 'Сенсорний шпиль', tier: 'I', desc: 'Модернізована верхівка з датчиками атмосфери та телеметрією.', 
         x: 1000, y: 1900, 
-        req: null, owned: true, img: 'images/Nose.png' 
+        req: null, owned: true, img: 'images/Nose.png',
+        cost: { iron: 0, fuel: 0, coins: 0 }
     },
     { 
         id: 'branch3', name: 'Керамічний Щит', tier: 'II', desc: 'Покращена верхівка.', 
         x: 1300, y: 1900, 
-        req: 'root3', owned: false, img: 'images/Nose.png' 
+        req: 'root3', owned: false, img: 'images/Nose.png',
+        cost: { iron: 300, fuel: 100, coins: 380 }
     }
 ];
 
@@ -202,11 +211,37 @@ function openPanel(node) {
     const img = document.getElementById('node-image');
     img.src = node.img || 'images/modules/placeholder.png';
 
+    // === ЛОГІКА ВІДОБРАЖЕННЯ ЦІНИ ===
+    const costContainer = document.getElementById('node-cost');
+    
+    if (node.owned) {
+        costContainer.innerHTML = '<div class="cost-owned-msg">ВЖЕ ВСТАНОВЛЕНО</div>';
+        costContainer.classList.add('visible');
+    } else {
+        const c = node.cost || { iron: 0, fuel: 0, coins: 0 };
+        
+        costContainer.innerHTML = `
+            <div class="cost-cell">
+                <span class="cost-icon">🌑</span>
+                <span class="cost-value val-iron">${c.iron}</span>
+            </div>
+            <div class="cost-cell">
+                <span class="cost-icon">⚛️</span>
+                <span class="cost-value val-fuel">${c.fuel}</span>
+            </div>
+            <div class="cost-cell">
+                <span class="cost-icon">🪙</span>
+                <span class="cost-value val-coin">${c.coins}</span>
+            </div>
+        `;
+        costContainer.classList.add('visible');
+    }
+
     // 🔘 Кнопка дослідження
     const btn = document.querySelector('.action-btn');
 
     if (node.owned) {
-        btn.textContent = 'ДОСЛІДЖЕНО';
+        btn.textContent = 'В АНГАРІ';
         btn.classList.add('disabled');
         btn.disabled = true;
     } else {

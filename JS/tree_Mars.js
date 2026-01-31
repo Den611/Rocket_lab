@@ -16,14 +16,16 @@ const treeNodes = [
         desc: 'Базовий модуль для перевезення корисного вантажу.', 
         x: 1000, y: 1000, 
         req: null, owned: true, img: 'images/Korpus.png',
-        rocketKey: 'cargo', level: 1 
+        rocketKey: 'cargo', level: 1,
+        cost: { iron: 0, fuel: 0, coins: 0 }
     },
     { 
         id: 'g1_2', name: 'Герметизація', tier: 'II', 
         desc: 'Покращена ізоляція відсіку для захисту вантажу.', 
         x: 1250, y: 1000, 
         req: 'g1_1', owned: false, img: 'images/Korpus.png',
-        rocketKey: 'cargo', level: 2 
+        rocketKey: 'cargo', level: 2,
+        cost: { iron: 600, fuel: 200, coins: 400 }
     },
     // Розвилка: Вгору (Панель керування) / Вниз (Сонячні панелі)
     { 
@@ -31,14 +33,16 @@ const treeNodes = [
         desc: 'Система розподілу енергії для нових модулів.', 
         x: 1500, y: 900, 
         req: 'g1_2', owned: false, img: 'images/Korpus.png',
-        rocketKey: 'cabin', level: 2
+        rocketKey: 'cabin', level: 2,
+        cost: { iron: 500, fuel: 150, coins: 500 }
     },
     { 
         id: 'g1_down', name: 'Сонячні Панелі', tier: 'III', 
         desc: 'Розкладні фотоелементи для генерації енергії.', 
         x: 1500, y: 1100, 
         req: 'g1_2', owned: false, img: 'images/Bataries.png',
-        rocketKey: 'solar', level: 1
+        rocketKey: 'solar', level: 1,
+        cost: { iron: 400, fuel: 100, coins: 450 }
     },
     // Фінал гілки
     { 
@@ -46,7 +50,8 @@ const treeNodes = [
         desc: 'Високоефективні панелі подвійної площі.', 
         x: 1750, y: 1100, // Йде від g1_down
         req: 'g1_down', owned: false, img: 'images/Bataries.png',
-        rocketKey: 'solar', level: 2
+        rocketKey: 'solar', level: 2,
+        cost: { iron: 300, fuel: 200, coins: 600 }
     },
 
 
@@ -56,21 +61,24 @@ const treeNodes = [
         desc: 'Система впорскування палива для різкого ривка.', 
         x: 1000, y: 1400, 
         req: null, owned: true, img: 'images/Turbina.png',
-        rocketKey: 'engine', level: 1
+        rocketKey: 'engine', level: 1,
+        cost: { iron: 0, fuel: 0, coins: 0 }
     },
     { 
         id: 'g2_up', name: 'Покращений Форсаж', tier: 'II', 
         desc: 'Оптимізована камера згоряння для економії палива.', 
         x: 1250, y: 1300, 
         req: 'g2_1', owned: false, img: 'images/Turbina.png',
-        rocketKey: 'engine', level: 2
+        rocketKey: 'engine', level: 2,
+        cost: { iron: 550, fuel: 350, coins: 700 }
     },
     { 
         id: 'g2_down', name: 'Бокові Турбіни', tier: 'II', 
         desc: 'Додаткові маневрові двигуни на корпусі.', 
         x: 1250, y: 1500, 
         req: 'g2_1', owned: false, img: 'images/Turbina.png',
-        rocketKey: 'booster', level: 1
+        rocketKey: 'booster', level: 1,
+        cost: { iron: 400, fuel: 250, coins: 500 }
     },
 
 
@@ -81,14 +89,16 @@ const treeNodes = [
         desc: 'Термостійке покриття проти атмосферного тертя.', 
         x: 1000, y: 1700, 
         req: null, owned: true, img: 'images/Nose.png',
-        rocketKey: 'nose', level: 1
+        rocketKey: 'nose', level: 1,
+        cost: { iron: 0, fuel: 0, coins: 0 }
     },
     { 
         id: 'g3_a2', name: 'Нова Верхівка', tier: 'II', 
         desc: 'Посилений титановий конус для пробиття хмар.', 
         x: 1250, y: 1700, 
         req: 'g3_a1', owned: false, img: 'images/Nose.png',
-        rocketKey: 'nose', level: 2
+        rocketKey: 'nose', level: 2,
+        cost: { iron: 350, fuel: 150, coins: 480 }
     },
 
     // Лінія 2: Зброя (Бластери)
@@ -97,14 +107,16 @@ const treeNodes = [
         desc: 'Лазерна установка для знищення астероїдів.', 
         x: 1000, y: 1900, 
         req: null, owned: true, img: 'images/Blasters.png', // Якщо є іконка
-        rocketKey: 'weapons', level: 1
+        rocketKey: 'weapons', level: 1,
+        cost: { iron: 0, fuel: 0, coins: 0 }
     },
     { 
         id: 'g3_b2', name: 'Покращений Бластер', tier: 'II', 
         desc: 'Скорострільна плазмова гармата подвійної дії.', 
         x: 1250, y: 1900, 
         req: 'g3_b1', owned: false, img: 'images/Blasters.png',
-        rocketKey: 'weapons', level: 2
+        rocketKey: 'weapons', level: 2,
+        cost: { iron: 450, fuel: 300, coins: 700 }
     }
 ];
 
@@ -239,11 +251,37 @@ function openPanel(node) {
     const img = document.getElementById('node-image');
     img.src = node.img || 'images/modules/placeholder.png';
 
+    // === ЛОГІКА ВІДОБРАЖЕННЯ ЦІНИ ===
+    const costContainer = document.getElementById('node-cost');
+    
+    if (node.owned) {
+        costContainer.innerHTML = '<div class="cost-owned-msg">ВЖЕ ВСТАНОВЛЕНО</div>';
+        costContainer.classList.add('visible');
+    } else {
+        const c = node.cost || { iron: 0, fuel: 0, coins: 0 };
+        
+        costContainer.innerHTML = `
+            <div class="cost-cell">
+                <span class="cost-icon">🧱</span>
+                <span class="cost-value val-iron">${c.iron}</span>
+            </div>
+            <div class="cost-cell">
+                <span class="cost-icon">🧪</span>
+                <span class="cost-value val-fuel">${c.fuel}</span>
+            </div>
+            <div class="cost-cell">
+                <span class="cost-icon">🪙</span>
+                <span class="cost-value val-coin">${c.coins}</span>
+            </div>
+        `;
+        costContainer.classList.add('visible');
+    }
+
     // 🔘 Кнопка дослідження
     const btn = document.querySelector('.action-btn');
 
     if (node.owned) {
-        btn.textContent = 'ДОСЛІДЖЕНО';
+        btn.textContent = 'В АНГАРІ';
         btn.classList.add('disabled');
         btn.disabled = true;
     } else {

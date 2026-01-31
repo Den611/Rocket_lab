@@ -14,7 +14,7 @@ let selectedNode = null;
 
 // --- 1. ОНОВЛЕНІ ДАНІ (Додано rocketKey та level) ---
 // rocketKey має співпадати з ключами в index.html (nose, body, engine, fins)
-const treeNodes = [
+window.treeNodes = [
     // --- КАТЕГОРІЯ 1: НІС (NOSE) ---
     {
         id: 'gu1',
