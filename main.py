@@ -5,10 +5,15 @@ from aiogram.types import BotCommand
 from config import BOT_TOKEN
 from handlers import start, family, mission, shop, mining, admin, games, pvp, bonus
 import autocheck
+import threading
+from server import run_flask
 
 logging.basicConfig(level=logging.INFO)
 
 async def main():
+
+    threading.Thread(target=run_flask, daemon=True).start()
+
     bot = Bot(token=BOT_TOKEN)
     dp = Dispatcher()
 

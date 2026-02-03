@@ -1,5 +1,7 @@
 const canvas = document.getElementById('canvas');
 const viewport = document.getElementById('viewport');
+const urlParams = new URLSearchParams(window.location.search);
+window.userFamilyId = urlParams.get('family_id');
 
 // Змінні для позиції
 let currentX = 0; 
@@ -131,20 +133,11 @@ function updateCanvasPosition() {
 }
 
 async function syncWithSave() {
-    // 1. Запитуємо у БД список куплених модулів для цієї сім'ї
-    try {
-        const response = await fetch(`/api/rocket/get_upgrades?family_id=${window.userFamilyId}`);
-        const unlockedIds = await response.json(); // Очікуємо масив: ["gu1", "nc1", "e1"]
-
-        // 2. Проходимо по дереву і ставимо owned = true тільки тим, що є в БД
-        treeNodes.forEach(node => {
-            if (unlockedIds.includes(node.id)) {
-                node.owned = true;
-            }
-        });
-    } catch (e) {
-        console.error("Не вдалося синхронізуватися з БД:", e);
-    }
+    const res = await fetch(`/api/get_upgrades?family_id=${window.userFamilyId}`);
+    const unlocked = await res.json();
+    treeNodes.forEach(node => {
+        if (unlocked.includes(node.id)) node.owned = true;
+    });
 }
 // --- INIT ---
 function init() {
@@ -198,43 +191,24 @@ function init() {
 async function buyUpgrade() {
     if (!selectedNode || selectedNode.owned) return;
 
-    // 1. Відправляємо дані на сервер для перевірки в БД
-    try {
-        const response = await fetch('/api/rocket/upgrade', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                family_id: window.userFamilyId, // ID сім'ї (треба отримати при логіні)
-                module_id: selectedNode.id,     // напр. 'gu2'
-                cost: selectedNode.cost,        // ціна для перевірки балансу
-                req: selectedNode.req           // ID попереднього модуля
-            })
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            // 2. Якщо БД підтвердила покупку — оновлюємо UI
-            selectedNode.owned = true;
-            
-            const nodeDiv = document.getElementById(`node-${selectedNode.id}`);
-            if (nodeDiv) {
-                nodeDiv.classList.add('owned');
-                nodeDiv.querySelector('.node-status').innerHTML = '<span class="checkmark">✔</span>';
-            }
-
-            const btn = document.querySelector('.action-btn');
-            btn.textContent = 'ДОСЛІДЖЕНО';
-            btn.classList.add('disabled');
-            btn.disabled = true;
-
-            alert(`Успішно досліджено в базі: ${selectedNode.name}!`);
-        } else {
-            // 3. Якщо в БД мало ресурсів або не виконана умова
-            alert("Помилка БД: " + result.error);
-        }
-    } catch (error) {
-        console.error("Сервер не відповідає:", error);
+    const res = await fetch('/api/upgrade', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            family_id: window.userFamilyId,
+            module_id: selectedNode.id,
+            cost: selectedNode.cost,
+            req: selectedNode.req
+        })
+    });
+    
+    const result = await res.json();
+    if (result.success) {
+        selectedNode.owned = true;
+        init(); // перемалювати дерево
+        alert(result.message);
+    } else {
+        alert("Помилка: " + result.error);
     }
 }
 

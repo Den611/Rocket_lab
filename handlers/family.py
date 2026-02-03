@@ -77,22 +77,43 @@ async def family_info(message: types.Message):
 
 @router.message(F.text == "🛸 Ангар (Веб)")
 async def open_webapp(message: types.Message):
+    # Отримуємо ID сім'ї користувача з бази даних
     fid = db.get_user_family(message.from_user.id)
-    if not fid: return
+    if not fid: 
+        await message.answer("Спочатку створіть сім'ю або приєднайтеся до неї!")
+        return
+
     res = db.get_family_resources(fid)
     info = db.get_family_info(fid)
 
+    # Додаємо family_id у параметри URL
     params = {
-        "family": info[0], "planet": res[11], "balance": res[0],
-        "iron": res[1], "fuel": res[2], "regolith": res[3], "he3": res[4],
-        "silicon": res[5], "oxide": res[6], "hydrogen": res[7], "helium": res[8],
+        "family_id": fid,  # <--- ЦЕ НАЙВАЖЛИВІШЕ ДЛЯ ВАЛІДАЦІЇ БД
+        "family": info[0], 
+        "planet": res[11], 
+        "balance": res[0],
+        "iron": res[1], 
+        "fuel": res[2], 
+        "regolith": res[3], 
+        "he3": res[4],
+        "silicon": res[5], 
+        "oxide": res[6], 
+        "hydrogen": res[7], 
+        "helium": res[8],
         "mine_lvl": res[9]
     }
+    
+    # Формуємо посилання з параметрами
     url = f"{WEB_APP_URL}?{urllib.parse.urlencode(params)}"
+    
     kb = InlineKeyboardBuilder()
     kb.button(text="🖥 Відкрити термінал", web_app=WebAppInfo(url=url))
-    await message.answer(f"🚀 **Термінал доступу**", reply_markup=kb.as_markup())
-
+    
+    await message.answer(
+        f"🚀 **Термінал доступу активовано**\nКоманда: {info[0]}", 
+        reply_markup=kb.as_markup(),
+        parse_mode="Markdown"
+    )
 
 @router.message(F.text == "❌ Покинути сім'ю")
 async def leave(message: types.Message):
