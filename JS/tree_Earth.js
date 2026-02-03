@@ -130,23 +130,22 @@ function updateCanvasPosition() {
     canvas.style.transform = `translate(${currentX}px, ${currentY}px)`;
 }
 
-// --- СИНХРОНІЗАЦІЯ З ПАМ'ЯТТЮ (НОВЕ) ---
-function syncWithSave() {
-    // 1. Беремо сейв
-    const savedData = localStorage.getItem('myRocketSave');
-    if (!savedData) return; // Якщо сейву нема, все лишається як є (false)
+async function syncWithSave() {
+    // 1. Запитуємо у БД список куплених модулів для цієї сім'ї
+    try {
+        const response = await fetch(`/api/rocket/get_upgrades?family_id=${window.userFamilyId}`);
+        const unlockedIds = await response.json(); // Очікуємо масив: ["gu1", "nc1", "e1"]
 
-    const rocketState = JSON.parse(savedData);
-
-    // 2. Проходимо по дереву і ставимо owned = true, якщо рівень дозволяє
-    treeNodes.forEach(node => {
-        // Наприклад: якщо у сейві nose: 2, то і nose level 1, і nose level 2 стануть owned
-        if (rocketState[node.rocketKey] >= node.level) {
-            node.owned = true;
-        }
-    });
+        // 2. Проходимо по дереву і ставимо owned = true тільки тим, що є в БД
+        treeNodes.forEach(node => {
+            if (unlockedIds.includes(node.id)) {
+                node.owned = true;
+            }
+        });
+    } catch (e) {
+        console.error("Не вдалося синхронізуватися з БД:", e);
+    }
 }
-
 // --- INIT ---
 function init() {
     // Спочатку оновлюємо дані з пам'яті
@@ -196,54 +195,47 @@ function init() {
 }
 
 // --- ЛОГІКА ПОКУПКИ (НОВЕ) ---
-function buyUpgrade() {
-    if (!selectedNode) return;
-    if (selectedNode.owned) return; 
+async function buyUpgrade() {
+    if (!selectedNode || selectedNode.owned) return;
 
-    // Тут можна додати: if (money < cost) return;
+    // 1. Відправляємо дані на сервер для перевірки в БД
+    try {
+        const response = await fetch('/api/rocket/upgrade', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                family_id: window.userFamilyId, // ID сім'ї (треба отримати при логіні)
+                module_id: selectedNode.id,     // напр. 'gu2'
+                cost: selectedNode.cost,        // ціна для перевірки балансу
+                req: selectedNode.req           // ID попереднього модуля
+            })
+        });
 
-    // 1. Оновлюємо локальний стан ноди (візуально)
-    selectedNode.owned = true;
+        const result = await response.json();
 
-    // 2. Оновлюємо глобальний сейв (localStorage)
-    let currentSave = localStorage.getItem('myRocketSave');
-    
-    // Якщо сейву нема - створюємо його з ПРАВИЛЬНИМИ стартовими даними
-    if (!currentSave) {
-        currentSave = { 
-            nose: 1, body: 1, engine: 1, fins: 1, // Стартовий набір
-            cabin: 0, cargo: 0, solar: 0, booster: 0 
-        };
-    } else {
-        currentSave = JSON.parse(currentSave);
+        if (result.success) {
+            // 2. Якщо БД підтвердила покупку — оновлюємо UI
+            selectedNode.owned = true;
+            
+            const nodeDiv = document.getElementById(`node-${selectedNode.id}`);
+            if (nodeDiv) {
+                nodeDiv.classList.add('owned');
+                nodeDiv.querySelector('.node-status').innerHTML = '<span class="checkmark">✔</span>';
+            }
+
+            const btn = document.querySelector('.action-btn');
+            btn.textContent = 'ДОСЛІДЖЕНО';
+            btn.classList.add('disabled');
+            btn.disabled = true;
+
+            alert(`Успішно досліджено в базі: ${selectedNode.name}!`);
+        } else {
+            // 3. Якщо в БД мало ресурсів або не виконана умова
+            alert("Помилка БД: " + result.error);
+        }
+    } catch (error) {
+        console.error("Сервер не відповідає:", error);
     }
-
-    // Записуємо новий рівень
-    if (currentSave[selectedNode.rocketKey] < selectedNode.level) {
-        currentSave[selectedNode.rocketKey] = selectedNode.level;
-    }
-
-    localStorage.setItem('myRocketSave', JSON.stringify(currentSave));
-
-    // 3. Візуальні оновлення
-    const nodeDiv = document.getElementById(`node-${selectedNode.id}`);
-    if (nodeDiv) {
-        nodeDiv.classList.add('owned');
-        nodeDiv.querySelector('.node-status').innerHTML = '<span class="checkmark">✔</span>';
-    }
-
-    const btn = document.querySelector('.action-btn');
-    btn.textContent = 'ДОСЛІДЖЕНО';
-    btn.classList.add('disabled');
-    btn.disabled = true;
-
-    // Якщо це TIER 2, можна додати лінію з'єднання як активну
-    if (selectedNode.req) {
-         const line = document.getElementById(`line-${selectedNode.id}`);
-         if(line) line.style.opacity = '1'; // або додати клас active
-    }
-
-    alert(`Успішно досліджено: ${selectedNode.name}!`);
 }
 
 
