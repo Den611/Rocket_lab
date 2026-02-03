@@ -89,6 +89,15 @@ class Database:
                 FOREIGN KEY(mission_id) REFERENCES missions(id)
             )
         """)
+        self.cursor.execute("""
+            CREATE TABLE IF NOT EXISTS family_upgrades (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                family_id INTEGER,
+                module_id TEXT,  -- ID з вашого JS (наприклад, 'hull_mk2', 'eng_ultimate')
+                unlocked_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(family_id) REFERENCES families(id)
+            )
+        """)
         self.connection.commit()
 
     # --- МЕТОДИ ДЛЯ РОБОТИ З ДВОМА БАЗАМИ ---
@@ -334,3 +343,66 @@ class Database:
     def set_shield(self, fid, mins):
         t = datetime.datetime.now() + datetime.timedelta(minutes=mins)
         with self.connection: self.cursor.execute("UPDATE families SET shield_until = ? WHERE id = ?", (t, fid))
+    def get_family_unlocked_modules(self, family_id):
+        """Повертає список ID всіх розблокованих модулів для JS-інтерфейсу"""
+        with self.connection:
+            res = self.cursor.execute(
+                "SELECT module_id FROM family_upgrades WHERE family_id = ?", 
+                (family_id,)
+            ).fetchall()
+            return [row[0] for row in res]
+
+    def buy_module_upgrade(self, family_id, module_data):
+        """
+        module_data: словник з даними модуля (id, cost, req)
+        Логіка: Перевірка грошей -> Ресурсів -> Попереднього модуля -> Запис в БД
+        """
+        m_id = module_data['id']
+        req_id = module_data.get('req')
+        costs = module_data.get('cost', {'iron': 0, 'fuel': 0, 'coins': 0})
+
+        with self.connection:
+            # 1. Перевірка, чи не куплено вже
+            already = self.cursor.execute(
+                "SELECT id FROM family_upgrades WHERE family_id = ? AND module_id = ?",
+                (family_id, m_id)
+            ).fetchone()
+            if already: return False, "Вже досліджено"
+
+            # 2. Перевірка вимоги (якщо є req)
+            if req_id:
+                has_req = self.cursor.execute(
+                    "SELECT id FROM family_upgrades WHERE family_id = ? AND module_id = ?",
+                    (family_id, req_id)
+                ).fetchone()
+                if not has_req: return False, "Не виконано умови (потрібен попередній модуль)"
+
+            # 3. Перевірка грошей та ресурсів
+            # Отримуємо поточний баланс та ресурси
+            current = self.get_family_resources(family_id)
+            # current[0] - balance, [1] - iron, [2] - fuel
+            if current[0] < costs['coins']: return False, "Недостатньо монет"
+            if current[1] < costs['iron']: return False, "Недостатньо заліза"
+            if current[2] < costs['fuel']: return False, "Недостатньо палива"
+
+            # 4. Знімаємо оплату (Гроші в families, ресурси в res.storage)
+            self.cursor.execute("UPDATE families SET balance = balance - ? WHERE id = ?", (costs['coins'], family_id))
+            self.cursor.execute("""
+                UPDATE res.storage 
+                SET res_iron = res_iron - ?, res_fuel = res_fuel - ? 
+                WHERE family_id = ?
+            """, (costs['iron'], costs['fuel'], family_id))
+
+            # 5. Записуємо розблокування
+            self.cursor.execute(
+                "INSERT INTO family_upgrades (family_id, module_id) VALUES (?, ?)",
+                (family_id, m_id)
+            )
+            
+            # 6. (Опціонально) Оновлюємо загальний рівень в таблиці families для PvP
+            if 'engine' in m_id:
+                self.cursor.execute("UPDATE families SET engine_lvl = engine_lvl + 1 WHERE id = ?", (family_id,))
+            elif 'hull' in m_id:
+                self.cursor.execute("UPDATE families SET hull_lvl = hull_lvl + 1 WHERE id = ?", (family_id,))
+
+            return True, "Успішно досліджено!"
