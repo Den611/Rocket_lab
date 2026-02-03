@@ -2,7 +2,7 @@ from aiogram import Router, F, types
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.types import WebAppInfo
 from database import Database
-from config import WEB_APP_URL
+from config import WEB_APP_URL1
 import urllib.parse
 
 router = Router()
@@ -27,7 +27,7 @@ async def open_shop(message: types.Message):
         "engine_lvl": info[3],
         "hull_lvl": info[4]
     }
-    web_url = f"{WEB_APP_URL}?{urllib.parse.urlencode(params)}"
+    web_url = f"{WEB_APP_URL1}?{urllib.parse.urlencode(params)}"
 
     # Ціни на швидкі покращення
     eng_price = info[3] * 500
@@ -35,7 +35,7 @@ async def open_shop(message: types.Message):
 
     builder = InlineKeyboardBuilder()
     # Кнопка на Веб-додаток
-    builder.button(text="🔬 Відкрити Дерево Досліджень (WEB)", web_app=WebAppInfo(url=web_url))
+    builder.button(text="🔬 Відкрити Дерево Досліджень (WEB)", web_app=WebAppInfo(url=WEB_APP_URL1))
 
     # Швидкі кнопки (якщо треба швидко апнути стат без вебу)
     builder.button(text=f"🔥 Двигун v{info[3] + 1} (💰{eng_price})", callback_data=f"upg:engine_lvl:{eng_price}")
@@ -76,7 +76,7 @@ async def buy_upgrade(call: types.CallbackQuery):
         builder = InlineKeyboardBuilder()
         # Генеруємо URL знову, щоб оновити дані
         params = {"family": info[0], "planet": info[5], "balance": bal - price}
-        web_url = f"{WEB_APP_URL}?{urllib.parse.urlencode(params)}"
+        web_url = f"{WEB_APP_URL1}?{urllib.parse.urlencode(params)}"
 
         builder.button(text="🔬 Відкрити Дерево Досліджень (WEB)", web_app=WebAppInfo(url=web_url))
         builder.button(text=f"🔥 Двигун v{info[3] + 1} (💰{new_eng_price})",
