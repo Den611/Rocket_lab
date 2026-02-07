@@ -295,39 +295,74 @@ header {
     overflow: visible; /* Додайте це, щоб нічого не обрізалося */
 }
 
-/* --- ПАНЕЛЬ РЕСУРСІВ (Ліворуч) --- */
+/* --- ПАНЕЛЬ РЕСУРСІВ --- */
 .resources-panel {
-    /* Позиція: Фіксована (HUD) */
     position: fixed; 
     top: 50%; 
     left: 4%; 
     transform: translateY(-50%);
     
-    /* == ЗБІЛЬШЕНИЙ РОЗМІР == */
-    width: 380px; /* Було 340px */
+    width: 380px; 
     padding: 2.5rem; 
     
-    /* Стиль */
     background: rgba(10, 15, 25, 0.85); 
     backdrop-filter: blur(15px);
     border: 1px solid rgba(255,255,255,0.15); 
     border-right: 5px solid var(--accent-green); 
     border-radius: 12px;
     
-    /* Тіні та шари */
     box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
     z-index: 1000; 
 
-    /* Анімація (якщо хочеш, щоб вона плавала, залиш це) */
-    animation: floatPanel 4s ease-in-out infinite;
-    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    /* Анімацію floatPanel видалено для стабільності на мобільних пристроях */
+    animation: none; 
+    transition: all 0.3s ease-in-out;
 }
 
+/* Ефект тільки легкого збільшення при наведенні */
 .resources-panel:hover {
-    animation-play-state: paused;
     border-color: rgba(255, 255, 255, 0.4);
-    box-shadow: 0 15px 40px rgba(0, 255, 157, 0.15);
-    transform: translateY(-50%) scale(1.02);
+    box-shadow: 0 10px 30px rgba(0, 255, 157, 0.2);
+    transform: translateY(-50%) scale(1.03); 
+}
+
+/* --- ПАНЕЛЬ ІНФОРМАЦІЇ --- */
+.info-panel {
+    position: fixed;
+    top: 50%; 
+    right: 4%;
+    transform: translateY(-50%);
+    
+    width: 380px;
+    padding: 2.5rem;
+    
+    background: rgba(10, 15, 25, 0.85);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.15); 
+    border-left: 5px solid var(--accent-cyan);
+    border-radius: 12px;
+    
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    z-index: 1000;
+    
+    opacity: 0; 
+    pointer-events: none; 
+    
+    /* Анімацію floatPanel видалено, щоб панель не закривала кнопку розробок */
+    animation: none;
+    transition: all 0.3s ease-in-out;
+}
+
+.info-panel.active { 
+    opacity: 1; 
+    pointer-events: all; 
+}
+
+/* Ефект тільки легкого збільшення при наведенні */
+.info-panel:hover {
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 10px 30px rgba(0, 243, 255, 0.2);
+    transform: translateY(-50%) scale(1.03);
 }
 
 /* ЗАГОЛОВОК (Центрування) */
@@ -522,7 +557,9 @@ header {
 }
 
 .module { cursor: pointer; transition: 0.3s; position: relative; }
-.module:hover { filter: drop-shadow(0 0 10px var(--accent-cyan)) brightness(1.2); z-index: 20; }
+.module:hover {
+filter: drop-shadow(0 0 10px var(--accent-cyan)) brightness(1.2);
+z-index: 20; }
 
 /* Форми модулів */
 .r-nose { width: 0; height: 0; border-left: 55px solid transparent; border-right: 55px solid transparent; border-bottom: 80px solid #e0e6ed; }
@@ -555,52 +592,6 @@ header {
 .main-flame { width: 50px; height: 120px; background: linear-gradient(to bottom, #fff, #ffeb3b, #ff5722, transparent); border-radius: 50% 50% 20% 20%; margin-top: -10px; filter: blur(8px); opacity: 0.9; animation: flameFlicker 0.08s infinite alternate-reverse; }
 
 @keyframes flameFlicker { from { transform: scaleY(1); opacity: 0.8; } to { transform: scaleY(1.1); opacity: 1; } }
-
-/* --- ПАНЕЛЬ ІНФОРМАЦІЇ (Праворуч) --- */
-.info-panel {
-    /* == ВИРІВНЮВАННЯ З ЛІВОЮ ПАНЕЛЛЮ == */
-    position: fixed; /* Змінено з absolute на fixed */
-    top: 50%; 
-    right: 4%; /* Такий же відступ, як зліва */
-    transform: translateY(-50%);
-    
-    /* == ЗБІЛЬШЕНИЙ РОЗМІР (Симетрія з лівою панеллю) == */
-    width: 380px; /* Було 320px */
-    padding: 2.5rem; /* Було 2rem */
-    
-    /* Стиль (ідентичний лівій, але акцент з іншого боку) */
-    background: rgba(10, 15, 25, 0.85); /* Темніший фон як зліва */
-    backdrop-filter: blur(15px);
-    border: 1px solid rgba(255, 255, 255, 0.15); 
-    border-left: 5px solid var(--accent-cyan); /* Акцент зліва */
-    border-radius: 12px;
-    
-    /* Тіні та видимість */
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    z-index: 1000;
-    
-    opacity: 0; 
-    pointer-events: none; 
-    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-    
-    /* Додаємо таку ж анімацію плавання, щоб було гармонійно */
-    animation: floatPanel 4s ease-in-out infinite;
-    animation-delay: 2s; /* Невелика затримка, щоб вони рухались не синхронно */
-}
-
-/* Коли панель активна */
-.info-panel.active { 
-    opacity: 1; 
-    pointer-events: all; 
-}
-
-/* При наведенні */
-.info-panel:hover {
-    animation-play-state: paused;
-    border-color: rgba(255, 255, 255, 0.4);
-    box-shadow: 0 15px 40px rgba(0, 243, 255, 0.15); /* Блакитне світіння */
-    transform: translateY(-50%) scale(1.02);
-}
 
 /* == ЗБІЛЬШЕНІ ШРИФТИ ВСЕРЕДИНІ == */
 .panel-header { 
@@ -653,12 +644,91 @@ header {
     color: #000; 
     box-shadow: 0 0 20px var(--accent-cyan);
 }
-/* --- MOBILE --- */
-@media (max-width: 1024px) {
-    .hero-container { padding-top: 120px; flex-direction: column; overflow-y: auto; height: auto; }
-    .rocket-stage { transform: scale(0.65); margin-top: 20px; margin-bottom: 20px; }
-    .resources-panel { position: relative; left: auto; top: auto; transform: none; width: 90%; margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; animation: none; }
-    .info-panel { position: relative; width: 90%; right: auto; top: auto; transform: none; opacity: 1; pointer-events: all; margin-bottom: 50px; }
-    .planet-nav { top: 80px; gap: 1rem; }
-    body { overflow-y: auto; }
+
+/* --- ADAPTIVE FOR PHONES (PHONES ONLY) --- */
+@media (max-width: 768px) {
+    /* 1. Header: Текст біля лого та квадратна кнопка */
+    header {
+        padding: 0.5rem 1rem;
+        justify-content: space-between;
+    }
+    .logo-text {
+        display: inline-block !important;
+        font-size: 1.1rem;
+        font-weight: bold;
+        letter-spacing: 1px;
+    }
+    .status-badge { display: none; } /* Ховаємо стару кнопку */
+    
+    .inventory-square-btn {
+        width: 45px;
+        height: 45px;
+        background: rgba(0, 243, 255, 0.1);
+        border: 1px solid var(--accent-cyan);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        cursor: pointer;
+    }
+
+    /* 2. Ресурси: Заголовок по центру та вертикальний список */
+    .hero-container {
+        flex-direction: column;
+        height: auto;
+        padding-top: 20px;
+    }
+    .resources-panel {
+        position: relative;
+        left: 0; top: 0; transform: none;
+        width: 95%;
+        margin: 10px auto;
+        padding: 1.5rem;
+        animation: none;
+        border-right: 1px solid rgba(255,255,255,0.15);
+        border-bottom: 4px solid var(--accent-green);
+    }
+    .res-header {
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    .res-list-vertical {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .res-item {
+        margin-bottom: 5px;
+        transform: none !important; /* Прибираємо зсув на мобілках */
+    }
+
+    /* 3. Ракета та Кнопка Розробок */
+    .rocket-shaker {
+        margin-top: 10px;
+        order: 2; /* Ракета йде після ресурсів */
+    }
+    .rocket-stage {
+        transform: scale(0.7); /* Зменшуємо ракету для екрану телефону */
+        margin-bottom: 0;
+    }
+    .tech-tree-container {
+        margin-top: -30px; /* Підтягуємо кнопку ближче до вогню */
+        padding-bottom: 20px;
+    }
+
+    /* 4. Інфо панель: Уходить вниз і не закриває кнопку */
+    .info-panel {
+        position: relative; /* Тепер вона просто йде в кінці сторінки */
+        right: 0; top: 0; transform: none;
+        width: 95%;
+        margin: 0 auto 40px auto;
+        opacity: 1; /* Робимо її видимою постійно на мобілці для зручності */
+        pointer-events: all;
+        animation: none;
+        order: 3; /* Завжди після кнопки дерево розробок */
+    }
+    
+    .panel-header { font-size: 1.4rem; }
+    .panel-desc { font-size: 0.9rem; }
 }
