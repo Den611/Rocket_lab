@@ -387,3 +387,100 @@ body, html {
     font-size: 12px;
     text-transform: uppercase;
 }
+
+@media (max-width: 1200px) {
+    .planet-nav {
+        gap: 20px; /* Зменшуємо відстань між кнопками планет */
+    }
+    
+    .resource-row {
+        gap: 30px; /* Зменшуємо відстань між ресурсами */
+    }
+    
+    /* Трохи посуваємо кнопку, щоб не наїжджала */
+    .back-btn {
+        left: 15px; 
+        padding: 6px 12px;
+    }
+}
+
+/* 2. Для мобільних телефонів та вузьких екранів (менше 768px) */
+@media (max-width: 768px) {
+    .main-header {
+        position: relative; /* Змінюємо позиціонування */
+        height: auto;
+        padding: 10px;
+    }
+
+    /* Кнопка "Назад" стає частиною потоку (не absolute), щоб не накладатись */
+    .back-btn {
+        position: relative; 
+        top: 0; 
+        left: 0;
+        margin-bottom: 10px;
+        align-self: flex-start; /* Вирівнювання зліва */
+    }
+
+    .planet-nav {
+        padding: 5px 0;
+        flex-wrap: wrap; /* Дозволяємо перенос на новий рядок */
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .planet-btn {
+        padding: 5px 15px;
+        font-size: 10px;
+    }
+
+    .resource-row {
+        gap: 15px;
+        flex-wrap: wrap; /* Ресурси теж можуть переноситись */
+        justify-content: center;
+        font-size: 14px;
+    }
+
+    .res-item {
+        min-width: auto; /* Прибираємо фіксовану ширину */
+    }
+}
+
+/* 3. Для низьких екранів (наприклад, телефон у горизонтальному режимі) */
+@media (max-height: 500px) {
+    .main-header {
+        flex-direction: row; /* Розміщуємо все в один рядок, якщо влізе */
+        flex-wrap: wrap;
+        justify-content: center;
+        padding: 5px;
+        gap: 15px;
+    }
+
+    .back-btn {
+        position: static; /* В потік */
+        margin: 0;
+        font-size: 10px;
+        padding: 4px 8px;
+    }
+
+    .planet-nav {
+        padding: 0;
+        margin: 0;
+        gap: 5px;
+    }
+
+    .planet-btn {
+        padding: 4px 10px;
+        font-size: 10px;
+    }
+
+    .resource-row {
+        padding: 0;
+        gap: 15px;
+        font-size: 12px;
+    }
+    
+    .res-icon {
+        width: 20px;
+        height: 20px;
+    }
+}

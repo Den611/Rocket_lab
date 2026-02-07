@@ -8,6 +8,10 @@ let currentX = 0;
 let currentY = 0; 
 let isDragging = false;
 let startX, startY;
+let scale = 1;              // Поточний масштаб
+const MIN_SCALE = 0.3;      // Мінімальне зменшення
+const MAX_SCALE = 3.0;      // Максимальне збільшення
+const ZOOM_SPEED = 0.001;
 const NODE_WIDTH = 150;
 const NODE_HEIGHT = 145;
 
@@ -129,7 +133,32 @@ window.addEventListener('mouseup', () => {
 });
 
 function updateCanvasPosition() {
-    canvas.style.transform = `translate(${currentX}px, ${currentY}px)`;
+    // 1. Параметри вашого полотна (з CSS .tree-canvas width/height)
+    const CANVAS_SIZE = 3000; 
+    
+    // 2. Розміри вікна користувача
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    // 3. Розрахунок меж (Borders)
+    // Дозволяємо "заїжджати" за край, але не далі ніж на 500px або пів екрана
+    // min_x: це коли ми тягнемо вліво (бачимо правий край карти)
+    const minX = -CANVAS_SIZE * scale + (viewportWidth * 0.2); // Залишаємо 20% екрана збоку
+    
+    // max_x: це коли ми тягнемо вправо (бачимо лівий край карти)
+    const maxX = viewportWidth * 0.8; // Залишаємо 20% екрана з іншого боку
+
+    const minY = -CANVAS_SIZE * scale + (viewportHeight * 0.2);
+    const maxY = viewportHeight * 0.8;
+
+    // 4. Застосовуємо обмеження (Clamping)
+    if (currentX < minX) currentX = minX;
+    if (currentX > maxX) currentX = maxX;
+    if (currentY < minY) currentY = minY;
+    if (currentY > maxY) currentY = maxY;
+
+    // 5. Застосовуємо трансформацію
+    canvas.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale})`;
 }
 
 async function syncWithSave() {
@@ -150,6 +179,7 @@ function init() {
         div.className = 'node';
         if (node.owned) div.classList.add('owned');
         div.id = `node-${node.id}`;
+        canvas.style.transformOrigin = '0 0';
         
         // Позиціонування
         div.style.left = node.x + 'px';
@@ -360,6 +390,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// --- ЛОГІКА ЗУМУ КОЛЕСОМ ---
+viewport.addEventListener('wheel', (e) => {
+    e.preventDefault(); // Забороняємо прокрутку сторінки браузером
 
+    const xs = (e.clientX - currentX) / scale;
+    const ys = (e.clientY - currentY) / scale;
+
+    const delta = -e.deltaY;
+    
+    // Обмежуємо швидкість зміни, щоб було плавно
+    const factor = (delta > 0) ? 1.1 : 0.9;
+    
+    let newScale = scale * factor;
+
+    // Обмеження мінімуму і максимуму
+    if (newScale < MIN_SCALE) newScale = MIN_SCALE;
+    if (newScale > MAX_SCALE) newScale = MAX_SCALE;
+
+    // Математика, щоб зум був у точку курсора (cursor-centered zoom)
+    currentX -= xs * (newScale - scale);
+    currentY -= ys * (newScale - scale);
+    scale = newScale;
+
+    updateCanvasPosition();
+}, { passive: false });
 
 window.onload = init;

@@ -323,7 +323,8 @@ header {
 .resources-panel:hover {
     border-color: rgba(255, 255, 255, 0.4);
     box-shadow: 0 10px 30px rgba(0, 255, 157, 0.2);
-    transform: translateY(-50%) scale(1.03); 
+    /* Залишаємо центрування по вертикалі, легке збільшення */
+    transform: translateY(-50%) scale(1.02); 
 }
 
 /* --- ПАНЕЛЬ ІНФОРМАЦІЇ --- */
@@ -362,7 +363,8 @@ header {
 .info-panel:hover {
     border-color: rgba(255, 255, 255, 0.4);
     box-shadow: 0 10px 30px rgba(0, 243, 255, 0.2);
-    transform: translateY(-50%) scale(1.03);
+    /* Залишаємо центрування по вертикалі, легке збільшення */
+    transform: translateY(-50%) scale(1.02);
 }
 
 /* ЗАГОЛОВОК (Центрування) */
@@ -728,7 +730,24 @@ z-index: 20; }
         animation: none;
         order: 3; /* Завжди після кнопки дерево розробок */
     }
+
+    .resources-panel:hover, .info-panel:hover {
+        transform: scale(1.02); /* Тільки збільшення, без зміщення вгору */
+    }
     
     .panel-header { font-size: 1.4rem; }
     .panel-desc { font-size: 0.9rem; }
+
+    .status-badge.inventory-sq {
+        display: flex !important; /* Примусово показуємо */
+        width: 45px;
+        height: 45px;
+        background: rgba(0, 243, 255, 0.1);
+        border: 1px solid var(--accent-cyan);
+        border-radius: 8px;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        font-size: 1.5rem;
+    }
 }

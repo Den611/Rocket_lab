@@ -6,6 +6,10 @@ let currentX = 0;
 let currentY = 0; 
 let isDragging = false;
 let startX, startY;
+let scale = 1;              // Поточний масштаб
+const MIN_SCALE = 0.3;      // Мінімальне зменшення
+const MAX_SCALE = 3.0;      // Максимальне збільшення
+const ZOOM_SPEED = 0.001;
 const NODE_WIDTH = 150;
 const NODE_HEIGHT = 145;
 // --- 1. ОНОВЛЕНІ КООРДИНАТИ (Рівні лінії) ---
@@ -101,11 +105,12 @@ window.addEventListener('mouseup', () => {
 });
 
 function updateCanvasPosition() {
-    canvas.style.transform = `translate(${currentX}px, ${currentY}px)`;
+    canvas.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale})`;
 }
 
 // --- INIT ---
 function init() {
+    canvas.style.transformOrigin = '0 0';
     // 1. Малюємо ноди
     treeNodes.forEach(node => {
         const div = document.createElement('div');
@@ -285,5 +290,31 @@ document.addEventListener('DOMContentLoaded', () => {
         backBtn.innerHTML = `<span class="arrow">‹</span> MENU`;
     }
 });
+
+// --- ЛОГІКА ЗУМУ КОЛЕСОМ ---
+viewport.addEventListener('wheel', (e) => {
+    e.preventDefault(); // Забороняємо прокрутку сторінки браузером
+
+    const xs = (e.clientX - currentX) / scale;
+    const ys = (e.clientY - currentY) / scale;
+
+    const delta = -e.deltaY;
+    
+    // Обмежуємо швидкість зміни, щоб було плавно
+    const factor = (delta > 0) ? 1.1 : 0.9;
+    
+    let newScale = scale * factor;
+
+    // Обмеження мінімуму і максимуму
+    if (newScale < MIN_SCALE) newScale = MIN_SCALE;
+    if (newScale > MAX_SCALE) newScale = MAX_SCALE;
+
+    // Математика, щоб зум був у точку курсора (cursor-centered zoom)
+    currentX -= xs * (newScale - scale);
+    currentY -= ys * (newScale - scale);
+    scale = newScale;
+
+    updateCanvasPosition();
+}, { passive: false });
 
 window.onload = init;
