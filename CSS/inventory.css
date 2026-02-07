@@ -32,26 +32,51 @@ body {
 
 /* Header */
 .main-header {
-    display: flex; align-items: center; justify-content: center;
-    padding: 20px;
+    display: grid;
+    /* Три колонки: [кнопка] [заголовок] [порожнє місце для балансу] */
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    padding: 15px 20px;
     background: rgba(0, 0, 0, 0.6);
     border-bottom: 1px solid rgba(0, 242, 255, 0.3);
     position: sticky; top: 0; z-index: 100;
     backdrop-filter: blur(10px);
+    gap: 15px; /* Відступ між елементами */
 }
 
 .back-btn {
-    position: absolute; left: 20px;
-    text-decoration: none; color: var(--cyan);
-    font-family: var(--font-ui); font-size: 14px; border: 1px solid var(--cyan);
-    padding: 8px 20px; background: rgba(0, 242, 255, 0.1);
+    /* Прибираємо absolute, тепер кнопка частина сітки */
+    position: static; 
+    text-decoration: none; 
+    color: var(--cyan);
+    font-family: var(--font-ui); 
+    font-size: 14px; 
+    border: 1px solid var(--cyan);
+    padding: 8px 20px; 
+    background: rgba(0, 242, 255, 0.1);
     transition: 0.3s;
+    white-space: nowrap; /* Текст кнопки не переноситься */
 }
-.back-btn:hover { background: var(--cyan); color: #000; box-shadow: 0 0 15px var(--cyan); }
+
+.back-btn:hover { 
+    background: var(--cyan); 
+    color: #000; 
+    box-shadow: 0 0 15px var(--cyan); 
+}
 
 .page-title {
-    font-family: var(--font-ui); color: white; letter-spacing: 3px; font-size: 24px;
-    text-shadow: 0 0 10px var(--cyan); margin: 0;
+    font-family: var(--font-ui); 
+    color: white; 
+    letter-spacing: 3px; 
+    font-size: 24px;
+    text-shadow: 0 0 10px var(--cyan); 
+    margin: 0;
+    text-align: center;
+    
+    /* Якщо текст дуже довгий, він не зламає верстку */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Main Container */
@@ -133,9 +158,22 @@ body {
 
 /* Адаптив для телефонів */
 @media (max-width: 768px) {
-    .page-title { font-size: 18px; }
+    .main-header {
+        /* На телефонах ставимо все в одну колонку (стовпчик) */
+        grid-template-columns: 1fr;
+        justify-items: center; /* Центруємо все */
+        gap: 10px;
+        padding: 10px;
+    }
+    .page-title {
+        font-size: 18px;
+        white-space: normal; /* Дозволяємо перенос тексту на телефонах */
+    }
     .inventory-container { padding: 20px 10px; }
     .resources-grid { grid-template-columns: 1fr 1fr; }
     .modules-grid { grid-template-columns: 1fr; }
-    .back-btn { padding: 5px 10px; font-size: 12px; }
+    .back-btn {
+        width: 100%; /* Кнопка на всю ширину для зручності */
+        text-align: center;
+    }
 }
