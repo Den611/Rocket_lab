@@ -322,6 +322,28 @@ function initHyperSpace() {
     }
 }
 
+document.addEventListener('DOMContentLoaded', () => {
+    // ... existing code ...
+
+    // --- INVENTORY BUTTON LOGIC ---
+    const inventoryBtn = document.querySelector('.status-badge.inventory-sq');
+    if (inventoryBtn) {
+        inventoryBtn.addEventListener('click', () => {
+            // Get family_id from URL if it exists
+            const urlParams = new URLSearchParams(window.location.search);
+            const familyId = urlParams.get('family_id');
+            
+            if (familyId) {
+                window.location.href = `inventory.html?family_id=${familyId}`;
+            } else {
+                // Fallback if no ID is present (optional)
+                console.warn("No family_id found, redirecting without it.");
+                window.location.href = 'inventory.html';
+            }
+        });
+    }
+});
+
 // --- ДАНІ МОДУЛІВ ---
 const modulesData = {
     nose: { title: "Nose Cone", desc: "Aerodynamic cap.", integrity: 98, level: 10 },
