@@ -406,3 +406,46 @@ class Database:
                 self.cursor.execute("UPDATE families SET hull_lvl = hull_lvl + 1 WHERE id = ?", (family_id,))
 
             return True, "Успішно досліджено!"
+
+    def get_full_inventory(self, family_id):
+        """Отримує баланс, ресурси та список куплених модулів одним викликом"""
+        try:
+            with self.connection:
+                # 1. Отримуємо ресурси та баланс (використовуємо реальні назви колонок: res_iron, res_fuel тощо)
+                res = self.cursor.execute("""
+                    SELECT 
+                        f.balance, r.res_iron, r.res_fuel, r.res_regolith, 
+                        r.res_he3, r.res_silicon, r.res_oxide, r.res_hydrogen, r.res_helium
+                    FROM families f
+                    LEFT JOIN res.storage r ON f.id = r.family_id
+                    WHERE f.id = ?
+                """, (family_id,)).fetchone()
+
+                # 2. Отримуємо розблоковані модулі
+                upgrades = self.cursor.execute(
+                    "SELECT module_id FROM family_upgrades WHERE family_id = ?", 
+                    (family_id,)
+                ).fetchall()
+                
+                owned_ids = [row[0] for row in upgrades]
+
+                if not res:
+                    return None
+
+                return {
+                    "resources": {
+                        "coins": res[0],
+                        "iron": res[1],
+                        "fuel": res[2],
+                        "regolith": res[3],
+                        "he3": res[4],
+                        "silicon": res[5],
+                        "oxide": res[6],
+                        "hydrogen": res[7],
+                        "helium": res[8]
+                    },
+                    "owned_modules": owned_ids
+                }
+        except Exception as e:
+            print(f"DB Inventory Error: {e}")
+            return None
