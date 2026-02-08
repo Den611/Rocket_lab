@@ -5,12 +5,12 @@ import datetime
 
 class Database:
     def __init__(self, db_file):
-        self.connection = sqlite3.connect(db_file)
+        # ВИПРАВЛЕНО: додано check_same_thread=False для стабільної роботи з Flask
+        self.connection = sqlite3.connect(db_file, check_same_thread=False)
         self.cursor = self.connection.cursor()
         
-        # 🔥 МАГІЯ: Підключаємо другу базу даних як 'res'
+        # Підключаємо другу базу даних як 'res'
         self.cursor.execute("ATTACH DATABASE 'resourses.db' AS res")
-        
         self.create_tables()
 
     def create_tables(self):
@@ -119,8 +119,8 @@ class Database:
 
     def get_family_resources(self, family_id):
         with self.connection:
-            # Об'єднуємо дані з двох баз (JOIN)
-            return self.cursor.execute("""
+            # ВИПРАВЛЕНО: Чітко визначаємо порядок полів для мапінгу в server.py
+            res = self.cursor.execute("""
                 SELECT 
                     f.balance, 
                     r.res_iron, r.res_fuel, r.res_regolith, r.res_he3, 
@@ -130,6 +130,7 @@ class Database:
                 LEFT JOIN res.storage r ON f.id = r.family_id
                 WHERE f.id = ?
             """, (family_id,)).fetchone()
+            return res
 
     def deduct_resources(self, family_id, money, res_name=None, res_amount=0):
         with self.connection:

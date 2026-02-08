@@ -1,54 +1,76 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Налаштування кнопки назад
+    // 1. Налаштування ідентифікації та кнопки назад
     const backBtn = document.getElementById('back-btn');
     const urlParams = new URLSearchParams(window.location.search);
     const familyId = urlParams.get('family_id');
 
     if (familyId) {
-        // Якщо є ID сім'ї, додаємо його до посилання назад
+        // Додаємо ID сім'ї до посилання назад для збереження контексту
         backBtn.href = `index.html?family_id=${familyId}`;
         loadInventory(familyId);
     } else {
-        // Якщо немає, пробуємо взяти дефолтний або показати помилку
         console.warn("No family_id provided!");
-        document.querySelector('.loading-text').innerText = "Помилка: не знайдено ID гравця";
+        const loadingText = document.querySelector('.loading-text');
+        if (loadingText) loadingText.innerText = "Помилка: не знайдено ID гравця";
     }
 });
 
+/**
+ * Завантажує дані інвентарю з сервера
+ */
 async function loadInventory(familyId) {
     try {
-        // ЗАПИТ ДО СЕРВЕРА (потрібно додати цей endpoint в Python)
+        // Виконуємо запит до вашого Flask API
         const response = await fetch(`/api/inventory?family_id=${familyId}`);
+        
+        if (!response.ok) {
+            throw new Error(`Server status: ${response.status}`);
+        }
+
         const data = await response.json();
 
         if (data.error) {
-            alert("Помилка: " + data.error);
+            alert("Помилка сервера: " + data.error);
             return;
         }
 
+        // Відображаємо отримані дані
         renderResources(data.resources);
         renderModules(data.modules);
 
     } catch (e) {
         console.error("Connection error:", e);
-        document.getElementById('resources-grid').innerHTML = '<div style="color:red">Помилка з\'єднання з сервером</div>';
+        const grid = document.getElementById('resources-grid');
+        if (grid) {
+            grid.innerHTML = '<div style="color:red; padding:20px;">Помилка з\'єднання з бортовим комп\'ютером</div>';
+        }
     }
 }
 
+/**
+ * Відображає сітку ресурсів (валюта + матеріали)
+ */
 function renderResources(res) {
     const container = document.getElementById('resources-grid');
+    if (!container) return;
+    
     container.innerHTML = '';
 
-    // Список ресурсів (можна розширити)
-    const items = [
+    // Повний список ресурсів згідно зі структурою вашої БД
+    const resourceMap = [
+        { key: 'coins', name: 'Спейскоіни', icon: '🪙', color: '#00ff9d' },
         { key: 'iron', name: 'Залізо', icon: '🔩', color: '#aebbc9' },
         { key: 'fuel', name: 'Паливо', icon: '💠', color: '#ff9d00' },
-        { key: 'coins', name: 'Спейскоіни', icon: '🪙', color: '#00ff9d' },
-        { key: 'energy', name: 'Енергія', icon: '⚡', color: '#00f2ff' } // Приклад додаткового
+        { key: 'regolith', name: 'Реголіт', icon: '🌑', color: '#8e8e8e' },
+        { key: 'he3', name: 'Гелій-3', icon: '💎', color: '#00f2ff' },
+        { key: 'silicon', name: 'Кремній', icon: '💾', color: '#32a852' },
+        { key: 'oxide', name: 'Оксид', icon: '🧪', color: '#a83232' },
+        { key: 'hydrogen', name: 'Водень', icon: '🎈', color: '#3262a8' },
+        { key: 'helium', name: 'Гелій', icon: '🌌', color: '#6a32a8' }
     ];
 
-    items.forEach(item => {
-        // Якщо ресурс прийшов з сервера, показуємо його
+    resourceMap.forEach(item => {
+        // Перевіряємо наявність ресурсу в об'єкті (може бути 0, тому перевіряємо на undefined)
         if (res[item.key] !== undefined) {
             const card = document.createElement('div');
             card.className = 'res-card';
@@ -65,12 +87,17 @@ function renderResources(res) {
     });
 }
 
+/**
+ * Відображає список розблокованих модулів в ангарі
+ */
 function renderModules(modules) {
     const container = document.getElementById('modules-grid');
+    if (!container) return;
+
     container.innerHTML = '';
 
     if (!modules || modules.length === 0) {
-        container.innerHTML = '<div style="color:gray; padding:10px;">Ангар порожній. Досліджуйте технології!</div>';
+        container.innerHTML = '<div style="color:gray; padding:20px; text-align:center; width:100%;">Ангар порожній. Досліджуйте нові технології в дереві розвитку!</div>';
         return;
     }
 
@@ -78,7 +105,7 @@ function renderModules(modules) {
         const card = document.createElement('div');
         card.className = 'mod-card';
         
-        // Вибираємо картинку (можна додати логіку для різних картинок)
+        // Визначення шляху до зображення на основі типу модуля
         let imgPath = 'images/modules/placeholder.png';
         if (mod.type === 'nose') imgPath = 'images/Nose.png';
         if (mod.type === 'body') imgPath = 'images/Korpus.png';
@@ -87,12 +114,15 @@ function renderModules(modules) {
 
         card.innerHTML = `
             <div class="mod-img-box">
-                <img src="${imgPath}" alt="${mod.name}">
+                <img src="${imgPath}" alt="${mod.name}" onerror="this.src='images/Logo_for_site.png'">
             </div>
             <div class="mod-body">
-                <span class="mod-tier">TIER ${mod.tier || 'I'}</span>
+                <div class="mod-header">
+                    <span class="mod-tier">TIER ${mod.tier || 'I'}</span>
+                    <span class="mod-type-label">${mod.type.toUpperCase()}</span>
+                </div>
                 <h3 class="mod-name">${mod.name}</h3>
-                <p class="mod-desc">${mod.desc || 'Високотехнологічний модуль для вашої ракети.'}</p>
+                <p class="mod-desc">${mod.desc || 'Спеціалізований модуль космічної програми.'}</p>
             </div>
         `;
         container.appendChild(card);
