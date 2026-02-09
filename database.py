@@ -69,7 +69,7 @@ class Database:
             # 3. Місії
             self.cursor.execute("""
                 CREATE TABLE IF NOT EXISTS missions (
-                    id INTEGER PRIMARY KEY,
+                    id SERIAL PRIMARY KEY,
                     name TEXT NOT NULL,
                     description TEXT,
                     difficulty INTEGER,
@@ -301,20 +301,36 @@ class Database:
             self.cursor.execute("UPDATE families SET mine_lvl = mine_lvl + 1, last_collection = CURRENT_TIMESTAMP, upgrade_end_time = NULL WHERE id = %s", (family_id,))
 
     def get_expired_missions(self):
+        import datetime
+        # Беремо час бота, а не бази даних, щоб уникнути проблем з часовими поясами
+        now = datetime.datetime.now()
         with self.connection:
-            self.cursor.execute("SELECT id, active_mission_id, active_launch_id, current_planet FROM families WHERE mission_end_time <= CURRENT_TIMESTAMP AND mission_end_time IS NOT NULL")
+            # ДЛЯ POSTGRESQL (psycopg2) ВИКОРИСТОВУЄМО %s
+            self.cursor.execute("""
+                SELECT id, active_mission_id, active_launch_id, current_planet 
+                FROM families 
+                WHERE mission_end_time IS NOT NULL AND mission_end_time <= %s
+            """, (now,))
             return self.cursor.fetchall()
 
     def get_expired_upgrades(self):
+        import datetime
+        now = datetime.datetime.now()
         with self.connection:
-            self.cursor.execute("SELECT id, current_planet, mine_lvl FROM families WHERE upgrade_end_time <= CURRENT_TIMESTAMP AND upgrade_end_time IS NOT NULL")
+            # ДЛЯ POSTGRESQL (psycopg2) ВИКОРИСТОВУЄМО %s
+            self.cursor.execute("""
+                SELECT id, current_planet, mine_lvl 
+                FROM families 
+                WHERE upgrade_end_time IS NOT NULL AND upgrade_end_time <= %s
+            """, (now,))
             return self.cursor.fetchall()
 
     def get_family_user_ids(self, family_id):
         with self.connection:
+            # ВИПРАВЛЕНО: Було "SELECT id", стало "SELECT user_id"
             self.cursor.execute("SELECT user_id FROM users WHERE family_id = %s", (family_id,))
-            res = self.cursor.fetchall()
-            return [row[0] for row in res]
+            result = self.cursor.fetchall()
+            return [row[0] for row in result]
             
     def admin_skip_timers(self, family_id):
         with self.connection:
@@ -431,3 +447,27 @@ class Database:
         except Exception as e:
             print(f"DB Inventory Error: {e}")
             return None
+    # --- НАВІГАЦІЯ ---
+
+    def get_unlocked_planets(self, family_id):
+        with self.connection:
+            self.cursor.execute("SELECT unlocked_planets FROM families WHERE id = %s", (family_id,))
+            res = self.cursor.fetchone()
+            # Повертаємо список ['Earth', 'Moon']
+            return res[0].split(',') if res and res[0] else ['Earth']
+
+    def unlock_planet(self, family_id, new_planet):
+        # Спочатку отримуємо поточні
+        current = self.get_unlocked_planets(family_id)
+        if new_planet not in current:
+            current.append(new_planet)
+            new_str = ",".join(current)
+            with self.connection:
+                self.cursor.execute("UPDATE families SET unlocked_planets = %s WHERE id = %s", (new_str, family_id))
+
+    def travel_to_planet(self, family_id, planet_name):
+        with self.connection:
+            # Змінюємо планету і скидаємо рівень шахти (бо на новій планеті нові шахти)
+            # АБО можна зберігати рівень шахти для кожної планети окремо (це складніше)
+            # Поки що просто змінюємо локацію:
+            self.cursor.execute("UPDATE families SET current_planet = %s WHERE id = %s", (planet_name, family_id))

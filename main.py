@@ -3,7 +3,7 @@ import logging
 from aiogram import Bot, Dispatcher
 from aiogram.types import BotCommand
 from config import BOT_TOKEN
-from handlers import start, family, mission, shop, mining, admin, games, pvp, bonus
+from handlers import navigation, start, family, mission, shop, mining, admin, games, pvp, bonus, webapp
 import autocheck
 import threading
 from server import run_flask
@@ -27,6 +27,8 @@ async def main():
     dp.include_router(games.router)
     dp.include_router(pvp.router)
     dp.include_router(bonus.router)
+    dp.include_router(webapp.router)
+    dp.include_router(navigation.router)
 
     # Меню команд
     commands = [
