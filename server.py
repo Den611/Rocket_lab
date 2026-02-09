@@ -1,13 +1,15 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS  # Потрібно встановити: pip install flask-cors
+from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
 from database import Database
+import os
 
-app = Flask(__name__)
-CORS(app) # Дозволяє запити з будь-яких доменів (зокрема з Netlify)
+# Вказуємо, що статичні файли (html, css, js) лежать прямо тут ('.')
+app = Flask(__name__, static_folder='.', static_url_path='')
+CORS(app)
 
-db = Database("space.db")
+# Підключення до бази (залишається як було)
+db = Database() 
 
-# Повний каталог з описами, які очікує JS
 CATALOG = {
     'gu1': {'name': 'Конус-верхівка', 'type': 'nose', 'tier': 'I', 'desc': 'Базовий обтікач.'},
     'gu2': {'name': 'Сенсорний шпиль', 'type': 'nose', 'tier': 'II', 'desc': 'З датчиками.'},
@@ -18,6 +20,20 @@ CATALOG = {
     'a1': {'name': 'Надкрилки', 'type': 'fins', 'tier': 'I', 'desc': 'Стабілізація.'},
     'a2': {'name': 'Активні закрилки', 'type': 'fins', 'tier': 'II', 'desc': 'Маневрування.'}
 }
+
+# --- НОВІ МАРШРУТИ ДЛЯ САЙТУ ---
+
+@app.route('/')
+def index():
+    # Головна сторінка
+    return send_from_directory('.', 'index.html')
+
+@app.route('/<path:path>')
+def serve_static(path):
+    # Будь-які інші файли (CSS, JS, картинки, інші HTML)
+    return send_from_directory('.', path)
+
+# -------------------------------
 
 @app.route('/api/inventory', methods=['GET'])
 def get_inventory():
@@ -30,7 +46,6 @@ def get_inventory():
         if not data:
             return jsonify({'error': 'Family not found'}), 404
 
-        # Мапінг усіх ресурсів з бази (індекси 0-8)
         resources_data = {
             'coins': data[0],
             'iron': data[1],
@@ -57,7 +72,9 @@ def get_inventory():
             'modules': modules_list
         })
     except Exception as e:
+        print(f"Error: {e}")
         return jsonify({'error': str(e)}), 500
 
 def run_flask():
+    # Port 5000 стандартний, Render сам його прокине
     app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)
