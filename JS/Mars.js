@@ -129,13 +129,13 @@ function initNavigation() {
                     targetPage = 'index.html'; 
                     break;
                 case 'MOON':
-                    targetPage = 'moon.html';
+                    targetPage = 'Moon.html';
                     break;
                 case 'MARS':
-                    targetPage = 'mars.html';
+                    targetPage = 'Mars.html';
                     break;
                 case 'JUPITER':
-                    targetPage = 'jupiter.html'; // Або jupiter.html (як назвеш файл)
+                    targetPage = 'Jupiter.html'; // Або jupiter.html (як назвеш файл)
                     break;
             }
 
@@ -196,4 +196,37 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+document.addEventListener('DOMContentLoaded', () => {
+    updateMarsResources();
+    setInterval(updateMarsResources, 5000);
+});
 
+async function updateMarsResources() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const familyId = urlParams.get('family_id');
+
+    if (!familyId) return;
+
+    try {
+        const response = await fetch(`/api/inventory?family_id=${familyId}`);
+        if (!response.ok) return;
+        
+        const data = await response.json();
+
+        if (data.resources) {
+            // Спейскоіни
+            const coinsEl = document.getElementById('val-coins');
+            if (coinsEl) coinsEl.innerText = data.resources.coins;
+
+            // Кремній (Марс)
+            const siliconEl = document.getElementById('val-silicon');
+            if (siliconEl) siliconEl.innerText = data.resources.silicon;
+
+            // Оксид (Марс)
+            const oxideEl = document.getElementById('val-oxide');
+            if (oxideEl) oxideEl.innerText = data.resources.oxide;
+        }
+    } catch (error) {
+        console.error("Помилка отримання ресурсів:", error);
+    }
+}

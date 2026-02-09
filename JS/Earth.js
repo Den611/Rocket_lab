@@ -225,13 +225,13 @@ function initNavigation() {
                     targetPage = 'index.html'; 
                     break;
                 case 'MOON':  
-                    targetPage = 'moon.html'; 
+                    targetPage = 'Moon.html'; 
                     break;
                 case 'MARS':  
-                    targetPage = 'mars.html'; 
+                    targetPage = 'Mars.html'; 
                     break;
                 case 'JUPITER': 
-                    targetPage = 'jupiter.html'; 
+                    targetPage = 'Jupiter.html'; 
                     break;
                 default:
                     console.log('Unknown planet:', name);
@@ -355,3 +355,42 @@ const modulesData = {
     fins: { title: "Grid Fins", desc: "Stabilization.", integrity: 78, level: 35 },
     engine: { title: "Raptor Engine", desc: "Main propulsion.", integrity: 94, level: 90 }
 };
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Запускаємо оновлення одразу при завантаженні
+    updateEarthResources();
+    // Оновлюємо кожні 5 секунд
+    setInterval(updateEarthResources, 5000);
+});
+
+async function updateEarthResources() {
+    // Отримуємо family_id з адресного рядка
+    const urlParams = new URLSearchParams(window.location.search);
+    const familyId = urlParams.get('family_id');
+
+    if (!familyId) return;
+
+    try {
+        // Запит до API
+        const response = await fetch(`/api/inventory?family_id=${familyId}`);
+        if (!response.ok) return;
+        
+        const data = await response.json();
+
+        if (data.resources) {
+            // Оновлюємо Спейскоіни
+            const coinsEl = document.getElementById('val-coins');
+            if (coinsEl) coinsEl.innerText = data.resources.coins;
+
+            // Оновлюємо Залізо (передбачається ID val-iron)
+            const ironEl = document.getElementById('val-iron');
+            if (ironEl) ironEl.innerText = data.resources.iron;
+
+            // Оновлюємо Паливо (передбачається ID val-fuel)
+            const fuelEl = document.getElementById('val-fuel');
+            if (fuelEl) fuelEl.innerText = data.resources.fuel;
+        }
+    } catch (error) {
+        console.error("Помилка отримання ресурсів:", error);
+    }
+}

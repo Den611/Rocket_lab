@@ -129,13 +129,13 @@ function initNavigation() {
                     targetPage = 'index.html'; 
                     break;
                 case 'MOON':
-                    targetPage = 'moon.html';
+                    targetPage = 'Moon.html';
                     break;
                 case 'MARS':
-                    targetPage = 'mars.html';
+                    targetPage = 'Mars.html';
                     break;
                 case 'JUPITER':
-                    targetPage = 'jupiter.html'; // Або jupiter.html (як назвеш файл)
+                    targetPage = 'Jupiter.html'; // Або jupiter.html (як назвеш файл)
                     break;
             }
 
@@ -196,3 +196,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+document.addEventListener('DOMContentLoaded', () => {
+    // Запускаємо оновлення ресурсів одразу після завантаження сторінки
+    updateMoonResources();
+    // І повторюємо кожні 5 секунд
+    setInterval(updateMoonResources, 5000);
+});
+
+async function updateMoonResources() {
+    // Отримуємо family_id з URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const familyId = urlParams.get('family_id');
+
+    if (!familyId) return;
+
+    try {
+        // Запит до вашого існуючого API
+        const response = await fetch(`/api/inventory?family_id=${familyId}`);
+        if (!response.ok) return;
+        
+        const data = await response.json();
+
+        if (data.resources) {
+            // Оновлюємо Спейскоіни (Земля)
+            const coinsEl = document.getElementById('val-coins');
+            if (coinsEl) coinsEl.innerText = data.resources.coins;
+
+            // Оновлюємо Реголіт (Місяць)
+            const regEl = document.getElementById('val-regolith');
+            if (regEl) regEl.innerText = data.resources.regolith;
+
+            // Оновлюємо Гелій-3 (Місяць)
+            const he3El = document.getElementById('val-he3');
+            if (he3El) he3El.innerText = data.resources.he3;
+        }
+    } catch (error) {
+        console.error("Помилка отримання ресурсів:", error);
+    }
+}
