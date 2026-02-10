@@ -108,17 +108,31 @@ async function syncWithSave() {
 
 async function buyUpgrade() {
     if (!selectedNode || selectedNode.owned) return;
-    const res = await fetch('/api/upgrade', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ family_id: window.userFamilyId, module_id: selectedNode.id, cost: selectedNode.cost, req: selectedNode.req })
-    });
-    const result = await res.json();
-    if (result.success) {
-        selectedNode.owned = true;
-        init(); 
-        alert(result.message);
-    } else { alert("Помилка: " + result.error); }
+    
+    const familyId = window.userFamilyId || (typeof GLOBAL_FAMILY_ID !== 'undefined' ? GLOBAL_FAMILY_ID : null);
+    
+    try {
+        const res = await fetch('/api/upgrade', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ 
+                family_id: familyId, 
+                module_id: selectedNode.id, 
+                cost: selectedNode.cost, 
+                req: selectedNode.req 
+            })
+        });
+        const result = await res.json();
+        if (result.success) {
+            selectedNode.owned = true;
+            init(); // Перемальовуємо дерево
+            alert(result.message);
+        } else { 
+            alert("Помилка: " + result.error); 
+        }
+    } catch (e) {
+        console.error("Buy error:", e);
+    }
 }
 
 function init() {
@@ -229,14 +243,29 @@ window.addEventListener('mousemove', (e) => {
 });
 
 async function updateResources() {
-    if (!GLOBAL_FAMILY_ID) return;
+    // Пріоритет на вікно, потім на глобальну змінну з config.js
+    const familyId = window.userFamilyId || (typeof GLOBAL_FAMILY_ID !== 'undefined' ? GLOBAL_FAMILY_ID : null);
+    
+    if (!familyId) {
+        console.warn("UpdateResources: family_id не знайдено");
+        return;
+    }
+
     try {
-        const res = await fetch(`/api/inventory?family_id=${GLOBAL_FAMILY_ID}`);
+        const res = await fetch(`/api/inventory?family_id=${familyId}`);
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        
         const data = await res.json();
+        
         if (data.resources) {
-            document.getElementById('val-iron').innerText = data.resources.iron;
-            document.getElementById('val-fuel').innerText = data.resources.fuel;
-            document.getElementById('val-coins').innerText = data.resources.coins;
+            // Відображаємо значення, отримані з сервера
+            const ironEl = document.getElementById('val-iron');
+            const fuelEl = document.getElementById('val-fuel');
+            const coinsEl = document.getElementById('val-coins');
+
+            if (ironEl) ironEl.innerText = data.resources.iron;
+            if (fuelEl) fuelEl.innerText = data.resources.fuel;
+            if (coinsEl) coinsEl.innerText = data.resources.coins;
         }
     } catch (e) {
         console.error("Помилка завантаження ресурсів:", e);

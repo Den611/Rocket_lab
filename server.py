@@ -86,21 +86,33 @@ def get_upgrades():
 
 @app.route('/api/upgrade', methods=['POST'])
 def upgrade_module():
-    data = request.json
-    family_id = data.get('family_id')
-    module_id = data.get('module_id')
-    cost = data.get('cost')
-    req = data.get('req')
+    try:
+        data = request.json
+        family_id = data.get('family_id')
+        module_id = data.get('module_id')
+        cost = data.get('cost')
+        req = data.get('req')
 
-    # Перевірка ресурсів та логіка оновлення в базі даних
-    # Припускаємо, що у вашому класі Database є метод для цього
-    success, message = db.buy_upgrade(family_id, module_id, cost, req)
-    
-    if success:
-        return jsonify({'success': True, 'message': 'Модернізацію завершено!'})
-    else:
-        return jsonify({'success': False, 'error': message})
+        if not family_id or not module_id:
+            return jsonify({'success': False, 'error': 'Недостатньо даних для запиту'})
 
+        # Створюємо словник з даними модуля для відповідності методу в database.py
+        module_data = {
+            'id': module_id,
+            'cost': cost,
+            'req': req
+        }
+
+        # Викликаємо правильний метод: buy_module_upgrade замість buy_upgrade
+        success, message = db.buy_module_upgrade(family_id, module_data)
+        
+        if success:
+            return jsonify({'success': True, 'message': 'Модернізацію завершено!'})
+        else:
+            return jsonify({'success': False, 'error': message})
+    except Exception as e:
+        print(f"Server Error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 def run_flask():
     # Port 5000 стандартний, Render сам його прокине
     app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)
