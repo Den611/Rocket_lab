@@ -3,9 +3,11 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 def get_main_kb_no_family():
     return ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text="🚀 Створити сім'ю"), KeyboardButton(text="🔗 Приєднатися до сім'ї")]
-        ], 
-        resize_keyboard=True
+            [KeyboardButton(text="🚀 Створити сім'ю"), KeyboardButton(text="🔗 Приєднатися до сім'ї")],
+            [KeyboardButton(text="ℹ️ Допомога")]
+        ],
+        resize_keyboard=True,
+        input_field_placeholder="Оберіть дію..."
     )
 
 def get_main_kb_with_family():
@@ -15,12 +17,16 @@ def get_main_kb_with_family():
             [KeyboardButton(text="📡 Місії"), KeyboardButton(text="🏭 Інфраструктура")],
             [KeyboardButton(text="🛒 Магазин"), KeyboardButton(text="🎁 Вітальний бонус")],
             [KeyboardButton(text="🎲 Розваги"), KeyboardButton(text="⚔️ Рейд")],
-            [KeyboardButton(text="👾 Космічний бій"), KeyboardButton(text="🚀 Навігація")],
-            [KeyboardButton(text="❌ Покинути сім'ю")]
-        ], 
-        resize_keyboard=True
+            # Кнопка Академії вже є тут 👇
+            [KeyboardButton(text="👾 Космічний бій"), KeyboardButton(text="🎓 Академія")],
+            [KeyboardButton(text="❌ Покинути сім'ю"), KeyboardButton(text="🚀 Навігація")]
+        ],
+        resize_keyboard=True,
+        input_field_placeholder="Панель керування Rocket Lab"
     )
 
-# 👇 ДОДАЙТЕ ЦЮ ФУНКЦІЮ, ЩОБ ВИПРАВИТИ ПОМИЛКУ
-def main_keyboard():
-    return get_main_kb_with_family()
+def main_keyboard(user_family_id):
+    if user_family_id:
+        return get_main_kb_with_family()
+    else:
+        return get_main_kb_no_family()

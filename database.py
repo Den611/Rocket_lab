@@ -471,3 +471,40 @@ class Database:
             # АБО можна зберігати рівень шахти для кожної планети окремо (це складніше)
             # Поки що просто змінюємо локацію:
             self.cursor.execute("UPDATE families SET current_planet = %s WHERE id = %s", (planet_name, family_id))
+
+    # ... (весь попередній код класу Database) ...
+
+    # --- НОВІ МЕТОДИ ДЛЯ АКАДЕМІЇ ---
+    def check_quiz_limit(self, user_id):
+        import datetime
+        today = datetime.date.today()
+
+        with self.connection:
+            self.cursor.execute("SELECT last_quiz_date, daily_quiz_count FROM users WHERE user_id = %s", (user_id,))
+            res = self.cursor.fetchone()
+
+            if not res: return False, 0  # Користувача ще немає в базі
+
+            last_date = res[0]  # date object
+            count = res[1]
+
+            # Якщо дати відрізняються (новий день) -> скидаємо лічильник
+            if last_date != today:
+                self.cursor.execute(
+                    "UPDATE users SET last_quiz_date = %s, daily_quiz_count = 0 WHERE user_id = %s",
+                    (today, user_id)
+                )
+                return True, 0  # Лічильник скинуто, 0 спроб використано
+
+            # Якщо сьогодні вже грали
+            if count >= 5:
+                return False, count  # Ліміт вичерпано
+
+            return True, count  # Можна грати
+
+    def increment_quiz_count(self, user_id):
+        with self.connection:
+            self.cursor.execute(
+                "UPDATE users SET daily_quiz_count = daily_quiz_count + 1 WHERE user_id = %s",
+                (user_id,)
+            )
