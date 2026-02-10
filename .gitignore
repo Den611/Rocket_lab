@@ -1,0 +1,15 @@
+
+__pycache__/autocheck.cpython-313.pyc
+__pycache__/config.cpython-313.pyc
+__pycache__/database.cpython-313.pyc
+__pycache__/keyboards.cpython-313.pyc
+__pycache__/server.cpython-313.pyc
+handlers/__pycache__/__init__.cpython-313.pyc
+handlers/__pycache__/admin.cpython-313.pyc
+handlers/__pycache__/bonus.cpython-313.pyc
+handlers/__pycache__/games.cpython-313.pyc
+handlers/__pycache__/mining.cpython-313.pyc
+handlers/__pycache__/navigation.cpython-313.pyc
+handlers/__pycache__/webapp.cpython-313.pyc
+handlers/__pycache__/start.cpython-313.pyc
+handlers/__pycache__/shop.cpython-313.pyc

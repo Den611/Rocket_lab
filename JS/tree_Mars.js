@@ -1,17 +1,19 @@
 const canvas = document.getElementById('canvas');
 const viewport = document.getElementById('viewport');
+const urlParams = new URLSearchParams(window.location.search);
+window.userFamilyId = urlParams.get('family_id');
 
-// Змінні для позиції
 let currentX = 0; 
 let currentY = 0; 
 let isDragging = false;
 let startX, startY;
-let scale = 1;              // Поточний масштаб
-const MIN_SCALE = 0.3;      // Мінімальне зменшення
-const MAX_SCALE = 3.0;      // Максимальне збільшення
-const ZOOM_SPEED = 0.001;
+let scale = 1;
+const MIN_SCALE = 0.3;
+const MAX_SCALE = 3.0;
 const NODE_WIDTH = 150;
 const NODE_HEIGHT = 145;
+
+let selectedNode = null;
 
 const treeNodes = [
     // === ГРУПА 1: КОРПУС ТА ЕНЕРГІЯ (Вантажний відсік -> Герметизація -> Панелі) ===
@@ -124,237 +126,136 @@ const treeNodes = [
     }
 ];
 
-// --- DRAG LOGIC ---
-viewport.addEventListener('mousedown', (e) => {
-    if (e.target.closest('.node')) return;
-    isDragging = true;
-    startX = e.clientX - currentX;
-    startY = e.clientY - currentY;
-    viewport.style.cursor = 'grabbing';
-});
-
-window.addEventListener('mousemove', (e) => {
-    if (!isDragging) return;
-    e.preventDefault();
-    currentX = e.clientX - startX;
-    currentY = e.clientY - startY;
-    updateCanvasPosition();
-});
-
-window.addEventListener('mouseup', () => {
-    isDragging = false;
-    viewport.style.cursor = 'grab';
-});
-
-function updateCanvasPosition() {
-    canvas.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale})`;
+async function syncWithSave() {
+    try {
+        const res = await fetch(`/api/get_upgrades?family_id=${window.userFamilyId}`);
+        const unlocked = await res.json();
+        treeNodes.forEach(node => { if (unlocked.includes(node.id)) node.owned = true; });
+    } catch (e) { console.error("Sync error:", e); }
 }
 
-// --- INIT ---
-function init() {
-    canvas.style.transformOrigin = '0 0';
-    // 1. Малюємо ноди
-    treeNodes.forEach(node => {
-        const div = document.createElement('div');
-        div.className = 'node';
-        if (node.owned) div.classList.add('owned');
-        div.id = `node-${node.id}`;
-        
-        // Позиціонування
-        div.style.left = node.x + 'px';
-        div.style.top = node.y + 'px';
-
-        const checkmarkHTML = node.owned ? '<span class="checkmark">✔</span>' : '';
-        const imageSrc = node.img ? node.img : 'images/placeholder_icon.png';
-
-        div.innerHTML = `
-            <div class="node-img-box">
-                <img src="${imageSrc}" class="node-icon" onerror="this.style.opacity=0">
-            </div>
-            <div class="node-tier">TIER ${node.tier}</div>
-            <div class="node-title">${node.name}</div>
-            <div class="node-status">${checkmarkHTML}</div>
-        `;
-        
-        div.onclick = (e) => {
-            e.stopPropagation();
-            highlightPath(node.id);
-            openPanel(node);
-        };
-        canvas.appendChild(div);
-
-        if (node.req) drawLine(node);
+async function buyUpgrade() {
+    if (!selectedNode || selectedNode.owned) return;
+    const res = await fetch('/api/upgrade', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ family_id: window.userFamilyId, module_id: selectedNode.id, cost: selectedNode.cost, req: selectedNode.req })
     });
-
-    // 2. Центруємо екран на дереві
-    centerViewport();
+    const result = await res.json();
+    if (result.success) {
+        selectedNode.owned = true;
+        init(); 
+        alert(result.message);
+    } else { alert("Помилка: " + result.error); }
 }
 
-// --- ФУНКЦІЯ ЦЕНТРУВАННЯ ---
-function centerViewport() {
-    // Центр схеми
-    // X: середина між 1000 і 1750 ~ 1375
-    // Y: середина між 1000 і 1900 ~ 1450
-    const treeCenterX = 1375; 
-    const treeCenterY = 1450;
+function init() {
+    syncWithSave().then(() => {
+        canvas.innerHTML = ''; 
+        canvas.style.transformOrigin = '0 0';
+        treeNodes.forEach(node => {
+            const div = document.createElement('div');
+            div.className = 'node' + (node.owned ? ' owned' : '');
+            div.id = `node-${node.id}`;
+            div.style.left = node.x + 'px';
+            div.style.top = node.y + 'px';
+            div.innerHTML = `
+                <div class="node-img-box"><img src="${node.img}" class="node-icon"></div>
+                <div class="node-tier">TIER ${node.tier}</div>
+                <div class="node-title">${node.name}</div>
+                <div class="node-status">${node.owned ? '✔' : ''}</div>`;
+            div.onclick = (e) => { e.stopPropagation(); highlightPath(node.id); openPanel(node); };
+            canvas.appendChild(div);
+            if (node.req) drawLine(node);
+        });
+        centerViewport();
+        const researchBtn = document.querySelector('.action-btn');
+        if(researchBtn) researchBtn.onclick = buyUpgrade;
+    });
+}
 
-    const screenCenterX = window.innerWidth / 2;
-    const screenCenterY = window.innerHeight / 2;
+function openPanel(node) {
+    selectedNode = node;
+    document.getElementById('node-name').innerText = node.name;
+    document.getElementById('node-tier').innerText = `TIER ${node.tier}`;
+    document.getElementById('node-desc').innerText = node.desc;
+    document.getElementById('node-image').src = node.img;
 
-    currentX = screenCenterX - treeCenterX;
-    currentY = screenCenterY - treeCenterY;
+    const costDiv = document.getElementById('node-cost');
+    if (node.owned) {
+        costDiv.innerHTML = '<div class="cost-owned-msg">ВЖЕ ВСТАНОВЛЕНО</div>';
+    } else {
+        const c = node.cost;
+        costDiv.innerHTML = `
+    <div class="cost-cell"><span class="cost-icon">🧱</span><span class="cost-value">${c.iron}</span></div>
+    <div class="cost-cell"><span class="cost-icon">🧪</span><span class="cost-value">${c.fuel}</span></div>
+    <div class="cost-cell"><span class="cost-icon">🪙</span><span class="cost-value">${c.coins}</span></div>`;
+    }
 
-    updateCanvasPosition();
+    const btn = document.querySelector('.action-btn');
+    if (node.owned) {
+        btn.textContent = 'В АНГАРІ'; btn.classList.add('disabled'); btn.disabled = true;
+    } else {
+        let parent = treeNodes.find(n => n.id === node.req);
+        if (parent && !parent.owned) {
+            btn.textContent = 'НЕМАЄ ДОСТУПУ'; btn.classList.add('disabled'); btn.disabled = true;
+        } else {
+            btn.textContent = 'ДОСЛІДИТИ'; btn.classList.remove('disabled'); btn.disabled = false;
+        }
+    }
+    document.getElementById('info-panel').classList.add('active');
 }
 
 function drawLine(node) {
     const parent = treeNodes.find(n => n.id === node.req);
     if (!parent) return;
-
     const line = document.createElement('div');
     line.className = 'line';
-    line.id = `line-${node.id}`;
-
-    // 🔹 START — права сторона батька
     const startX = parent.x + NODE_WIDTH;
     const startY = parent.y + NODE_HEIGHT / 2;
-
-    // 🔹 END — ліва сторона дитини
     const endX = node.x;
     const endY = node.y + NODE_HEIGHT / 2;
-
-    const dx = endX - startX;
-    const dy = endY - startY;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-
+    const dist = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
     line.style.width = dist + 'px';
     line.style.left = startX + 'px';
     line.style.top = startY + 'px';
-    line.style.transform = `rotate(${Math.atan2(dy, dx)}rad)`;
-
+    line.style.transform = `rotate(${Math.atan2(endY - startY, endX - startX)}rad)`;
     canvas.appendChild(line);
 }
 
-// Функції панелі (залишаємо як було)
 function highlightPath(nodeId) {
     document.querySelectorAll('.node, .line').forEach(el => el.classList.remove('highlight'));
-    let currentId = nodeId;
-    while (currentId) {
-        document.getElementById(`node-${currentId}`)?.classList.add('highlight');
-        document.getElementById(`line-${currentId}`)?.classList.add('highlight');
-        const node = treeNodes.find(n => n.id === currentId);
-        currentId = node ? node.req : null;
+    let curr = nodeId;
+    while (curr) {
+        document.getElementById(`node-${curr}`)?.classList.add('highlight');
+        curr = treeNodes.find(n => n.id === curr)?.req;
     }
 }
 
-function openPanel(node) {
-    document.getElementById('node-name').innerText = node.name;
-    document.getElementById('node-tier').innerText = `TIER ${node.tier}`;
-    document.getElementById('node-desc').innerText = node.desc;
-
-    // 🖼 Картинка модуля
-    const img = document.getElementById('node-image');
-    img.src = node.img || 'images/modules/placeholder.png';
-
-    // === ЛОГІКА ВІДОБРАЖЕННЯ ЦІНИ ===
-    const costContainer = document.getElementById('node-cost');
-    
-    if (node.owned) {
-        costContainer.innerHTML = '<div class="cost-owned-msg">ВЖЕ ВСТАНОВЛЕНО</div>';
-        costContainer.classList.add('visible');
-    } else {
-        const c = node.cost || { iron: 0, fuel: 0, coins: 0 };
-        
-        costContainer.innerHTML = `
-            <div class="cost-cell">
-                <span class="cost-icon">🧱</span>
-                <span class="cost-value val-iron">${c.iron}</span>
-            </div>
-            <div class="cost-cell">
-                <span class="cost-icon">🧪</span>
-                <span class="cost-value val-fuel">${c.fuel}</span>
-            </div>
-            <div class="cost-cell">
-                <span class="cost-icon">🪙</span>
-                <span class="cost-value val-coin">${c.coins}</span>
-            </div>
-        `;
-        costContainer.classList.add('visible');
-    }
-
-    // 🔘 Кнопка дослідження
-    const btn = document.querySelector('.action-btn');
-
-    if (node.owned) {
-        btn.textContent = 'В АНГАРІ';
-        btn.classList.add('disabled');
-        btn.disabled = true;
-    } else {
-        btn.textContent = 'ДОСЛІДИТИ';
-        btn.classList.remove('disabled');
-        btn.disabled = false;
-    }
-
-    document.getElementById('info-panel').classList.add('active');
+function centerViewport() {
+    currentX = window.innerWidth / 2 - 1300;
+    currentY = window.innerHeight / 2 - 1500;
+    updateCanvasPosition();
 }
 
-function closePanel() {
-    document.getElementById('info-panel').classList.remove('active');
-    document.querySelectorAll('.node, .line').forEach(el => el.classList.remove('highlight'));
+function updateCanvasPosition() {
+    canvas.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale})`;
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const backBtn = document.getElementById('dynamic-back-btn');
-    const path = window.location.pathname; // Отримуємо поточну адресу
-    
-    // Об'єкт конфігурації: "де ми є" -> "куди йти"
-    const routes = {
-        'tree_Earth.html': { url: 'index.html', text: 'ГОЛОВНА' },
-        'tree_Moon.html':  { url: 'Moon.html',  text: 'МІСЯЦЬ' },
-        'tree_Mars.html':  { url: 'Mars.html',  text: 'МАРС' },
-        'tree_Jupiter.html': { url: 'Jupiter.html', text: 'ЮПІТЕР' }
-    };
-
-    // Перевіряємо, який файл зараз відкрито
-    for (const [key, route] of Object.entries(routes)) {
-        if (path.includes(key)) {
-            backBtn.href = route.url;
-            backBtn.innerHTML = `<span class="arrow">‹</span> ${route.text}`;
-            break; 
-        }
-    }
-    
-    // Якщо сторінка не знайдена в списку, ведемо на index.html за замовчуванням
-    if (backBtn.getAttribute('href') === '#') {
-        backBtn.href = 'index.html';
-        backBtn.innerHTML = `<span class="arrow">‹</span> MENU`;
-    }
+viewport.addEventListener('mousedown', (e) => {
+    if (e.target.closest('.node')) return;
+    isDragging = true;
+    startX = e.clientX - currentX;
+    startY = e.clientY - currentY;
 });
 
-// --- ЛОГІКА ЗУМУ КОЛЕСОМ ---
-viewport.addEventListener('wheel', (e) => {
-    e.preventDefault(); // Забороняємо прокрутку сторінки браузером
-
-    const xs = (e.clientX - currentX) / scale;
-    const ys = (e.clientY - currentY) / scale;
-
-    const delta = -e.deltaY;
-    
-    // Обмежуємо швидкість зміни, щоб було плавно
-    const factor = (delta > 0) ? 1.1 : 0.9;
-    
-    let newScale = scale * factor;
-
-    // Обмеження мінімуму і максимуму
-    if (newScale < MIN_SCALE) newScale = MIN_SCALE;
-    if (newScale > MAX_SCALE) newScale = MAX_SCALE;
-
-    // Математика, щоб зум був у точку курсора (cursor-centered zoom)
-    currentX -= xs * (newScale - scale);
-    currentY -= ys * (newScale - scale);
-    scale = newScale;
-
+window.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    currentX = e.clientX - startX;
+    currentY = e.clientY - startY;
     updateCanvasPosition();
-}, { passive: false });
+});
+
+window.addEventListener('mouseup', () => isDragging = false);
 
 window.onload = init;
