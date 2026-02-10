@@ -228,6 +228,25 @@ window.addEventListener('mousemove', (e) => {
     updateCanvasPosition();
 });
 
+async function updateResources() {
+    if (!GLOBAL_FAMILY_ID) return;
+    try {
+        const res = await fetch(`/api/inventory?family_id=${GLOBAL_FAMILY_ID}`);
+        const data = await res.json();
+        if (data.resources) {
+            document.getElementById('val-iron').innerText = data.resources.iron;
+            document.getElementById('val-fuel').innerText = data.resources.fuel;
+            document.getElementById('val-coins').innerText = data.resources.coins;
+        }
+    } catch (e) {
+        console.error("Помилка завантаження ресурсів:", e);
+    }
+}
+
+// Викликати при завантаженні та кожні 10 секунд
+updateResources();
+setInterval(updateResources, 10000);
+
 window.addEventListener('mouseup', () => isDragging = false);
 
 window.onload = init;
