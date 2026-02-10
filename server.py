@@ -94,25 +94,27 @@ def upgrade_module():
         req = data.get('req')
 
         if not family_id or not module_id:
-            return jsonify({'success': False, 'error': 'Недостатньо даних для запиту'})
+            return jsonify({'success': False, 'error': 'Недостатньо даних (відсутній ID сім\'ї або модуля)'})
 
-        # Створюємо словник з даними модуля для відповідності методу в database.py
-        module_data = {
+        # Формуємо об'єкт модуля, як того очікує database.py
+        module_params = {
             'id': module_id,
             'cost': cost,
             'req': req
         }
 
-        # Викликаємо правильний метод: buy_module_upgrade замість buy_upgrade
-        success, message = db.buy_module_upgrade(family_id, module_data)
+        # ВИПРАВЛЕНО: Виклик існуючого методу buy_module_upgrade замість buy_upgrade
+        success, message = db.buy_module_upgrade(family_id, module_params)
         
         if success:
-            return jsonify({'success': True, 'message': 'Модернізацію завершено!'})
+            return jsonify({'success': True, 'message': message})
         else:
             return jsonify({'success': False, 'error': message})
+            
     except Exception as e:
-        print(f"Server Error: {e}")
+        print(f"Помилка на сервері: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+    
 def run_flask():
     # Port 5000 стандартний, Render сам його прокине
     app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)
