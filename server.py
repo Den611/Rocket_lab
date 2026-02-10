@@ -75,6 +75,44 @@ def get_inventory():
         print(f"Error: {e}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/get_upgrades', methods=['GET'])
+def get_upgrades():
+    family_id = request.args.get('family_id')
+    if not family_id:
+        return jsonify([])
+    # Отримуємо список ID відкритих модулів із бази даних
+    unlocked_modules = db.get_family_unlocked_modules(family_id)
+    return jsonify(unlocked_modules)
+
+@app.route('/api/upgrade', methods=['POST'])
+def upgrade_module():
+    try:
+        data = request.json
+        family_id = data.get('family_id')
+        module_id = data.get('module_id')
+        cost = data.get('cost')
+        req = data.get('req')
+
+        if not family_id or not module_id:
+            return jsonify({'success': False, 'error': 'Недостатньо даних для запиту'})
+
+        # Створюємо словник з даними модуля для відповідності методу в database.py
+        module_data = {
+            'id': module_id,
+            'cost': cost,
+            'req': req
+        }
+
+        # Викликаємо правильний метод: buy_module_upgrade замість buy_upgrade
+        success, message = db.buy_module_upgrade(family_id, module_data)
+        
+        if success:
+            return jsonify({'success': True, 'message': 'Модернізацію завершено!'})
+        else:
+            return jsonify({'success': False, 'error': message})
+    except Exception as e:
+        print(f"Server Error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 def run_flask():
     # Port 5000 стандартний, Render сам його прокине
     app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)
