@@ -1,8 +1,12 @@
+// Отримання canvas та viewport для рендеру та переміщення камери
 const canvas = document.getElementById('canvas');
 const viewport = document.getElementById('viewport');
+
+// Ініціалізація Family ID з URL (першочергово)
 const urlParams = new URLSearchParams(window.location.search);
 window.userFamilyId = urlParams.get('family_id');
 
+// Налаштування камери та зуму
 let currentX = 0; 
 let currentY = 0; 
 let isDragging = false;
@@ -15,6 +19,7 @@ const NODE_HEIGHT = 145;
 
 let selectedNode = null;
 
+// Дерево технологій Землі
 window.treeNodes = [
     {
         id: 'gu1',
@@ -98,19 +103,33 @@ window.treeNodes = [
     }
 ];
 
+// Синхронізація куплених модулів з базою даних
 async function syncWithSave() {
+    const familyId = window.userFamilyId || (typeof GLOBAL_FAMILY_ID !== 'undefined' ? GLOBAL_FAMILY_ID : null);
+    if (!familyId) return;
+
     try {
-        const res = await fetch(`/api/get_upgrades?family_id=${window.userFamilyId}`);
+        const res = await fetch(`/api/get_upgrades?family_id=${familyId}`);
         const unlocked = await res.json();
-        treeNodes.forEach(node => { if (unlocked.includes(node.id)) node.owned = true; });
-    } catch (e) { console.error("Sync error:", e); }
+        treeNodes.forEach(node => { 
+            if (unlocked.includes(node.id)) node.owned = true; 
+        });
+    } catch (e) { 
+        console.error("Sync error:", e); 
+    }
 }
 
+// Купівля (дослідження) нового модуля
 async function buyUpgrade() {
     if (!selectedNode || selectedNode.owned) return;
     
     const familyId = window.userFamilyId || (typeof GLOBAL_FAMILY_ID !== 'undefined' ? GLOBAL_FAMILY_ID : null);
     
+    if (!familyId) {
+        alert("Помилка: Не знайдено ID сім'ї.");
+        return;
+    }
+
     try {
         const res = await fetch('/api/upgrade', {
             method: 'POST',
@@ -125,7 +144,7 @@ async function buyUpgrade() {
         const result = await res.json();
         if (result.success) {
             selectedNode.owned = true;
-            init(); // Перемальовуємо дерево
+            init(); // Оновлюємо візуальне дерево
             alert(result.message);
         } else { 
             alert("Помилка: " + result.error); 
@@ -135,6 +154,7 @@ async function buyUpgrade() {
     }
 }
 
+// Побудова дерева та запуск логіки
 function init() {
     syncWithSave().then(() => {
         canvas.innerHTML = ''; 
@@ -150,7 +170,11 @@ function init() {
                 <div class="node-tier">TIER ${node.tier}</div>
                 <div class="node-title">${node.name}</div>
                 <div class="node-status">${node.owned ? '✔' : ''}</div>`;
-            div.onclick = (e) => { e.stopPropagation(); highlightPath(node.id); openPanel(node); };
+            div.onclick = (e) => { 
+                e.stopPropagation(); 
+                highlightPath(node.id); 
+                openPanel(node); 
+            };
             canvas.appendChild(div);
             if (node.req) drawLine(node);
         });
@@ -160,6 +184,7 @@ function init() {
     });
 }
 
+// Відкриття панелі інформації про модуль
 function openPanel(node) {
     selectedNode = node;
     document.getElementById('node-name').innerText = node.name;
@@ -180,18 +205,25 @@ function openPanel(node) {
 
     const btn = document.querySelector('.action-btn');
     if (node.owned) {
-        btn.textContent = 'В АНГАРІ'; btn.classList.add('disabled'); btn.disabled = true;
+        btn.textContent = 'В АНГАРІ'; 
+        btn.classList.add('disabled'); 
+        btn.disabled = true;
     } else {
         let parent = treeNodes.find(n => n.id === node.req);
         if (parent && !parent.owned) {
-            btn.textContent = 'НЕМАЄ ДОСТУПУ'; btn.classList.add('disabled'); btn.disabled = true;
+            btn.textContent = 'НЕМАЄ ДОСТУПУ'; 
+            btn.classList.add('disabled'); 
+            btn.disabled = true;
         } else {
-            btn.textContent = 'ДОСЛІДИТИ'; btn.classList.remove('disabled'); btn.disabled = false;
+            btn.textContent = 'ДОСЛІДИТИ'; 
+            btn.classList.remove('disabled'); 
+            btn.disabled = false;
         }
     }
     document.getElementById('info-panel').classList.add('active');
 }
 
+// Малювання ліній зв'язку між вузлами
 function drawLine(node) {
     const parent = treeNodes.find(n => n.id === node.req);
     if (!parent) return;
@@ -209,6 +241,7 @@ function drawLine(node) {
     canvas.appendChild(line);
 }
 
+// Підсвічування шляху до кореня
 function highlightPath(nodeId) {
     document.querySelectorAll('.node, .line').forEach(el => el.classList.remove('highlight'));
     let curr = nodeId;
@@ -218,6 +251,7 @@ function highlightPath(nodeId) {
     }
 }
 
+// Управління камерою та відображенням
 function centerViewport() {
     currentX = window.innerWidth / 2 - 1300;
     currentY = window.innerHeight / 2 - 1500;
@@ -228,6 +262,7 @@ function updateCanvasPosition() {
     canvas.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale})`;
 }
 
+// Логіка перетягування (Drag-and-Drop)
 viewport.addEventListener('mousedown', (e) => {
     if (e.target.closest('.node')) return;
     isDragging = true;
@@ -242,8 +277,13 @@ window.addEventListener('mousemove', (e) => {
     updateCanvasPosition();
 });
 
+// Глобальна функція закриття панелі (може викликатися з HTML)
+window.closePanel = function() {
+    document.getElementById('info-panel').classList.remove('active');
+};
+
+// Отримання та відображення ресурсів з API
 async function updateResources() {
-    // Пріоритет на вікно, потім на глобальну змінну з config.js
     const familyId = window.userFamilyId || (typeof GLOBAL_FAMILY_ID !== 'undefined' ? GLOBAL_FAMILY_ID : null);
     
     if (!familyId) {
@@ -258,7 +298,6 @@ async function updateResources() {
         const data = await res.json();
         
         if (data.resources) {
-            // Відображаємо значення, отримані з сервера
             const ironEl = document.getElementById('val-iron');
             const fuelEl = document.getElementById('val-fuel');
             const coinsEl = document.getElementById('val-coins');
@@ -272,10 +311,11 @@ async function updateResources() {
     }
 }
 
-// Викликати при завантаженні та кожні 10 секунд
+// Таймер оновлення ресурсів (кожні 10 сек)
 updateResources();
 setInterval(updateResources, 10000);
 
 window.addEventListener('mouseup', () => isDragging = false);
 
+// Запуск ініціалізації при повному завантаженні вікна
 window.onload = init;
