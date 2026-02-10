@@ -4,75 +4,94 @@ from aiogram.types import WebAppInfo
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 from database import Database
 
-# 👇 ІМПОРТУЄМО ВАШЕ ПОВНЕ МЕНЮ З ФАЙЛУ keyboards.py
-from keyboards import main_keyboard 
+# Імпорт клавіатури для кнопки "Назад"
+from keyboards import main_keyboard
 
 router = Router()
 db = Database('space.db')
 
-# ВАШЕ ПОСИЛАННЯ НА ГРУ (з GitHub)
-GAME_URL = "https://artemkakoder228.github.io/Game/" 
+# --- ПОСИЛАННЯ ---
+ARCADE_URL = "https://artemkakoder228.github.io/Game/"  # Стара гра (GitHub)
+RENDER_URL = "https://rocket-lab.onrender.com"  # Новий сайт (Render)
 
-# 1. Відкриваємо гру
+
+# ==========================================
+# 1. ОБРОБНИК ДЛЯ "КОСМІЧНИЙ БІЙ" (СТАРА ГРА)
+# ==========================================
 @router.message(F.text == "👾 Космічний бій")
-async def open_game(message: types.Message):
+async def open_arcade_game(message: types.Message):
     builder = ReplyKeyboardBuilder()
-    builder.button(text="🚀 ЗАПУСТИТИ ДВИГУНИ", web_app=WebAppInfo(url=GAME_URL))
+    # Кнопка відкриває гру на GitHub
+    builder.button(text="🚀 ПОЧАТИ БІЙ", web_app=WebAppInfo(url=ARCADE_URL))
     builder.button(text="🔙 Назад")
     builder.adjust(1)
-    
+
     await message.answer(
         "🎮 **АРКАДНИЙ РЕЖИМ**\n\n"
         "Знищуйте ворогів, щоб заробити кредити!\n"
-        "1 збитий ворог = **10 монет**.\n\n"
-        "Тисніть кнопку внизу 👇",
+        "1 збитий ворог = **10 монет**.",
         reply_markup=builder.as_markup(resize_keyboard=True),
         parse_mode="Markdown"
     )
 
-# 2. Кнопка "Назад" повертає ПОВНЕ меню
+
+# ==========================================
+# 2. ОБРОБНИК ДЛЯ "ПОЛІТ (ВЕБ)" (НОВИЙ САЙТ)
+# ЦЬОГО БЛОКУ НЕ ВИСТАЧАЛО У ВАШОМУ ФАЙЛІ
+# ==========================================
+@router.message(F.text == "🛸 Політ (Веб)")
+async def open_render_app(message: types.Message):
+    builder = ReplyKeyboardBuilder()
+    # Кнопка відкриває сайт на Render
+    builder.button(text="🖥 ВІДКРИТИ ТЕРМІНАЛ", web_app=WebAppInfo(url=RENDER_URL))
+    builder.button(text="🔙 Назад")
+    builder.adjust(1)
+
+    await message.answer(
+        "🛸 **БОРТОВИЙ КОМП'ЮТЕР**\n\n"
+        "Завантаження систем керування та інвентарю...\n"
+        "Натисніть кнопку нижче для входу в систему.",
+        reply_markup=builder.as_markup(resize_keyboard=True),
+        parse_mode="Markdown"
+    )
+
+
+# ==========================================
+# 3. КНОПКА "НАЗАД"
+# ==========================================
 @router.message(F.text == "🔙 Назад")
 async def go_back(message: types.Message):
-    # Викликаємо main_keyboard(), щоб показати всі кнопки
     await message.answer("Головне меню", reply_markup=main_keyboard())
 
-# 3. Обробка результатів гри
+
+# ==========================================
+# 4. ОБРОБКА ДАНИХ (SCORE)
+# ==========================================
 @router.message(F.web_app_data)
 async def process_game_data(message: types.Message):
     try:
         data = json.loads(message.web_app_data.data)
-        
+
+        # Логіка нарахування балів
         if data.get('action') == 'game_score':
             score = int(data.get('amount', 0))
-            
-            # Якщо очок 0 або менше
+
             if score <= 0:
-                await message.answer(
-                    "Ви нікого не збили. Спробуйте ще раз!", 
-                    reply_markup=main_keyboard() # 👈 Повертаємо повне меню
-                )
+                await message.answer("Ви нікого не збили. Спробуйте ще раз!", reply_markup=main_keyboard())
                 return
 
             fid = db.get_user_family(message.from_user.id)
             if fid:
                 db.update_balance(fid, score)
-                
                 await message.answer(
-                    f"🏁 **МІСІЯ ЗАВЕРШЕНА!**\n\n"
-                    f"💀 Збито ворогів: **{score // 10}**\n"
-                    f"💰 Отримано: **+{score}** монет\n\n"
-                    f"_Кошти зараховано на баланс сім'ї._",
-                    # 👇 ТУТ ГОЛОВНА ЗМІНА:
-                    reply_markup=main_keyboard(), 
+                    f"🏁 **РЕЗУЛЬТАТ:**\n"
+                    f"💰 Зароблено: **{score}** монет",
+                    reply_markup=main_keyboard(),
                     parse_mode="Markdown"
                 )
             else:
-                await message.answer(
-                    "У вас немає сім'ї, тому ресурси втрачено в космосі.", 
-                    reply_markup=main_keyboard() # 👈 Повертаємо повне меню
-                )
-                
+                await message.answer("У вас немає сім'ї для нарахування монет.", reply_markup=main_keyboard())
+
     except Exception as e:
         print(f"Web App Error: {e}")
-        # У разі помилки теж повертаємо меню, щоб бот не завис
-        await message.answer("Сталася помилка обробки даних.", reply_markup=main_keyboard())
+        await message.answer("Дані отримано.", reply_markup=main_keyboard())
