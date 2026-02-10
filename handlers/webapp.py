@@ -8,12 +8,11 @@ from database import Database
 from keyboards import main_keyboard
 
 router = Router()
-db = Database('space.db')
+db = Database() # Виправлено: прибрано зайвий аргумент 'space.db'
 
 # --- ПОСИЛАННЯ ---
-ARCADE_URL = "https://artemkakoder228.github.io/Game/"  # Стара гра (GitHub)
-RENDER_URL = "https://rocket-lab.onrender.com"  # Новий сайт (Render)
-
+ARCADE_URL = "https://artemkakoder228.github.io/Game/"
+RENDER_URL = "https://rocket-lab.onrender.com"
 
 # ==========================================
 # 1. ОБРОБНИК ДЛЯ "КОСМІЧНИЙ БІЙ" (СТАРА ГРА)
@@ -21,7 +20,6 @@ RENDER_URL = "https://rocket-lab.onrender.com"  # Новий сайт (Render)
 @router.message(F.text == "👾 Космічний бій")
 async def open_arcade_game(message: types.Message):
     builder = ReplyKeyboardBuilder()
-    # Кнопка відкриває гру на GitHub
     builder.button(text="🚀 ПОЧАТИ БІЙ", web_app=WebAppInfo(url=ARCADE_URL))
     builder.button(text="🔙 Назад")
     builder.adjust(1)
@@ -34,16 +32,24 @@ async def open_arcade_game(message: types.Message):
         parse_mode="Markdown"
     )
 
-
 # ==========================================
 # 2. ОБРОБНИК ДЛЯ "ПОЛІТ (ВЕБ)" (НОВИЙ САЙТ)
-# ЦЬОГО БЛОКУ НЕ ВИСТАЧАЛО У ВАШОМУ ФАЙЛІ
 # ==========================================
 @router.message(F.text == "🛸 Політ (Веб)")
 async def open_render_app(message: types.Message):
+    user_id = message.from_user.id
+    family_id = db.get_user_family(user_id)
+
+    if not family_id:
+        await message.answer("⚠️ У вас немає сім'ї! Створіть її через /start.", reply_markup=main_keyboard())
+        return
+
+    # Формуємо персональне посилання з ID
+    personal_url = f"{RENDER_URL}?family_id={family_id}"
+
     builder = ReplyKeyboardBuilder()
-    # Кнопка відкриває сайт на Render
-    builder.button(text="🖥 ВІДКРИТИ ТЕРМІНАЛ", web_app=WebAppInfo(url=RENDER_URL))
+    # Передаємо personal_url замість загального RENDER_URL
+    builder.button(text="🖥 ВІДКРИТИ ТЕРМІНАЛ", web_app=WebAppInfo(url=personal_url))
     builder.button(text="🔙 Назад")
     builder.adjust(1)
 
@@ -55,14 +61,12 @@ async def open_render_app(message: types.Message):
         parse_mode="Markdown"
     )
 
-
 # ==========================================
 # 3. КНОПКА "НАЗАД"
 # ==========================================
 @router.message(F.text == "🔙 Назад")
 async def go_back(message: types.Message):
     await message.answer("Головне меню", reply_markup=main_keyboard())
-
 
 # ==========================================
 # 4. ОБРОБКА ДАНИХ (SCORE)
@@ -72,7 +76,6 @@ async def process_game_data(message: types.Message):
     try:
         data = json.loads(message.web_app_data.data)
 
-        # Логіка нарахування балів
         if data.get('action') == 'game_score':
             score = int(data.get('amount', 0))
 
@@ -94,4 +97,4 @@ async def process_game_data(message: types.Message):
 
     except Exception as e:
         print(f"Web App Error: {e}")
-        await message.answer("Дані отримано.", reply_markup=main_keyboard())
+        await message.answer("Дані отримано, але сталася помилка обробки.", reply_markup=main_keyboard())

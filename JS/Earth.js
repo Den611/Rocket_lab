@@ -10,84 +10,62 @@ if (tg.initDataUnsafe.user) {
 }
 
 // --- 1. НАЛАШТУВАННЯ СТАРТОВОГО СТАНУ (ДЕФОЛТ) ---
-// Це те, як виглядає ракета у "новачка"
 const defaultRocketState = {
-    nose: 1,    // Є
-    body: 1,    // Є
-    engine: 1,  // Є
-    fins: 1,    // Є
-    // Все інше - 0 (ПРИХОВАНО)
-    cabin: 0,
-    cargo: 0,
-    solar: 0,
-    booster: 0
+    nose: 1, body: 1, engine: 1, fins: 1,
+    cabin: 0, cargo: 0, solar: 0, booster: 0
 };
 
 // --- 2. ФУНКЦІЯ ЗАВАНТАЖЕННЯ ---
 function loadRocketState() {
     const savedData = localStorage.getItem('myRocketSave');
-    
     if (savedData) {
-        // Якщо є збереження - беремо його
         return JSON.parse(savedData);
     } else {
-        // Якщо немає - беремо дефолтний набір (обрізаний)
         return JSON.parse(JSON.stringify(defaultRocketState));
     }
 }
 
-// Ініціалізуємо глобальну змінну ОДИН РАЗ при старті
 let rocketState = loadRocketState();
-
-// Змінна для вибраного модуля
 let selectedModuleKey = null;
 
 document.addEventListener("DOMContentLoaded", () => {
     console.log('🚀 Rocket Lab Loading...');
     console.log('📦 Loaded State:', rocketState);
-    
+
     initHyperSpace();
-    updateRocketVisuals(); // Малюємо ракету
+    updateRocketVisuals();
     initInteractions();
     initNavigation();
-    
+
+    // Запуск оновлення ресурсів
+    updateEarthResources();
+    setInterval(updateEarthResources, 5000);
+
     console.log('✅ Rocket Lab Ready!');
 });
 
 // --- 3. ОНОВЛЕННЯ ГРАФІКИ ---
 function updateRocketVisuals() {
-    // Використовуємо глобальну змінну rocketState
     for (const [key, level] of Object.entries(rocketState)) {
-        
-        // Знаходимо всі елементи (і ліві, і праві частини)
         const elements = document.querySelectorAll(`[data-module="${key}"]`);
-        
         elements.forEach(el => {
-            // Очищаємо класи рівнів
             el.classList.remove('tier-0', 'tier-1', 'tier-2');
-            
             if (level > 0) {
-                // ЯКЩО МОДУЛЬ Є:
                 el.classList.add(`tier-${level}`);
-                el.style.display = ''; // Повертаємо стандартне відображення (flex/block)
-                
-                // Фікс для елементів, які в CSS можуть мати display: none
+                el.style.display = '';
                 if (window.getComputedStyle(el).display === 'none') {
-                     el.style.display = 'block'; 
+                     el.style.display = 'block';
                 }
             } else {
-                // ЯКЩО МОДУЛЯ НЕМАЄ (Рівень 0):
-                el.style.display = 'none'; // Жорстко ховаємо
+                el.style.display = 'none';
             }
         });
     }
 }
 
-// --- ЛОГІКА АПГРЕЙДУ (Тут поки імітація) ---
+// --- ЛОГІКА АПГРЕЙДУ ---
 function upgradeSelectedModule() {
-    if (!selectedModuleKey) return; 
-
-    // Тут ти можеш додати логіку переходу в дерево, якщо модуль == 0
+    if (!selectedModuleKey) return;
     if (rocketState[selectedModuleKey] === 0) {
         alert("Цей модуль ще не встановлено! Перейдіть у Дерево Розробок.");
         return;
@@ -95,34 +73,28 @@ function upgradeSelectedModule() {
 
     const currentLevel = rocketState[selectedModuleKey];
     const btn = document.querySelector('.upgrade-btn');
-    
+
     if (currentLevel < 2) {
-        const originalText = btn.innerText;
         btn.innerText = "INSTALLING...";
-        
         setTimeout(() => {
             rocketState[selectedModuleKey]++;
-            localStorage.setItem('myRocketSave', JSON.stringify(rocketState)); // Зберігаємо прогрес
-            
+            localStorage.setItem('myRocketSave', JSON.stringify(rocketState));
             updateRocketVisuals();
             refreshInfoPanel(selectedModuleKey);
-            
             btn.innerText = "COMPLETE!";
             setTimeout(() => {
-                updateButtonState(rocketState[selectedModuleKey]); 
+                updateButtonState(rocketState[selectedModuleKey]);
             }, 1000);
-        }, 500); 
+        }, 500);
     }
 }
 
-// --- ДОПОМІЖНІ ФУНКЦІЇ ---
 function updateButtonState(level) {
     const btn = document.querySelector('.upgrade-btn');
     if (level === 0) {
         btn.innerText = "LOCKED (RESEARCH NEEDED)";
         btn.style.background = "#333";
         btn.style.color = "#888";
-        // btn.disabled = true; // Можна розблокувати, якщо хочеш щоб кнопка вела в дерево
     } else if (level === 1) {
         btn.innerText = "UPGRADE TO MK-2 (5000 $)";
         btn.style.background = "rgba(0, 243, 255, 0.1)";
@@ -152,7 +124,6 @@ function initInteractions() {
             refreshInfoPanel(key);
             panel.classList.add('active');
         });
-        
         mod.addEventListener('click', () => {
              selectedModuleKey = mod.getAttribute('data-module');
              refreshInfoPanel(selectedModuleKey);
@@ -162,12 +133,8 @@ function initInteractions() {
 
 function refreshInfoPanel(key) {
     const currentLevel = rocketState[key] || 0;
-    const nodes = window.treeNodes || []; 
-    
-    // Шукаємо дані саме для ПОТОЧНОГО рівня цього модуля
+    const nodes = window.treeNodes || [];
     const activeNode = nodes.find(n => n.rocketKey === key && n.level === currentLevel);
-    
-    // Шукаємо дані для НАСТУПНОГО рівня (щоб показати ціну апгрейду)
     const nextNode = nodes.find(n => n.rocketKey === key && n.level === currentLevel + 1);
 
     const pTitle = document.getElementById('panelTitle');
@@ -175,72 +142,53 @@ function refreshInfoPanel(key) {
     const btn = document.querySelector('.upgrade-btn');
 
     if (activeNode) {
-        // Оновлюємо назву та опис з масиву
         pTitle.innerText = activeNode.name.toUpperCase();
         pDesc.innerText = activeNode.desc;
-        
-        // ЛОГІКА КНОПКИ (Замість "INSTALLING")
         if (nextNode) {
-            // Якщо є куди качати — показуємо ціну наступного рівня
             const cost = nextNode.cost;
             btn.innerText = `UPGRADE: ${cost.iron}🔩 | ${cost.coins}🪙`;
             btn.style.display = 'block';
             btn.disabled = false;
         } else {
-            // Якщо це макс. рівень
             btn.innerText = "MAX LEVEL REACHED";
             btn.disabled = true;
             btn.style.background = "var(--accent-green)";
         }
     } else {
-        // Якщо модуль взагалі не куплений (Level 0)
         pTitle.innerText = "LOCKED MODULE";
         pDesc.innerText = "Дослідіть цей модуль у дереві розробок.";
         btn.innerText = "GO TO TECH TREE";
     }
 
-    // Оновлення прогрес-барів
     const levelPercent = (currentLevel / 2) * 100;
     document.getElementById('barLevel').style.width = `${levelPercent}%`;
     document.getElementById('statLevel').innerText = `MK-${currentLevel}`;
 }
 
-// --- НАВІГАЦІЯ ---
+// --- НАВІГАЦІЯ (ВИПРАВЛЕНО) ---
 function initNavigation() {
-    // 1. Кнопки планет (EARTH, MOON, MARS...)
+    // 1. Кнопки планет
     const planets = document.querySelectorAll('.planet-item');
-    
+
     planets.forEach(planet => {
         planet.addEventListener('click', () => {
-            // Шукаємо текст всередині кнопки (наприклад, "MOON")
             const nameElement = planet.querySelector('.planet-name');
             if (!nameElement) return;
 
             const name = nameElement.innerText.trim();
             let targetPage = '';
 
-            // Визначаємо куди переходити
             switch (name) {
-                case 'EARTH': 
-                    targetPage = 'index.html'; 
-                    break;
-                case 'MOON':  
-                    targetPage = 'Moon.html'; 
-                    break;
-                case 'MARS':  
-                    targetPage = 'Mars.html'; 
-                    break;
-                case 'JUPITER': 
-                    targetPage = 'Jupiter.html'; 
-                    break;
-                default:
-                    console.log('Unknown planet:', name);
+                case 'EARTH': targetPage = 'index.html'; break;
+                case 'MOON':  targetPage = 'Moon.html'; break;
+                case 'MARS':  targetPage = 'Mars.html'; break;
+                case 'JUPITER': targetPage = 'Jupiter.html'; break;
             }
 
-            // Якщо сторінка визначена — переходимо
             if (targetPage) {
                 console.log(`Navigating to: ${targetPage}`);
-                window.location.href = targetPage;
+                // ВИКОРИСТОВУЄМО НОВУ ФУНКЦІЮ
+                window.navigateTo(targetPage);
             }
         });
     });
@@ -249,10 +197,8 @@ function initNavigation() {
     const treeBtn = document.querySelector('.tech-tree-btn');
     if (treeBtn) {
         treeBtn.addEventListener('click', () => {
-            // Перевіряємо, яка планета зараз активна (має клас .active)
-            // Якщо ми на index.html, то активна Earth
             const activePlanet = document.querySelector('.planet-item.active');
-            let treeFile = 'tree_Earth.html'; // Дефолт
+            let treeFile = 'tree_Earth.html';
 
             if (activePlanet) {
                 const planetName = activePlanet.querySelector('.planet-name').innerText.trim();
@@ -260,8 +206,17 @@ function initNavigation() {
                 else if (planetName === 'MARS') treeFile = 'tree_Mars.html';
                 else if (planetName === 'JUPITER') treeFile = 'tree_Jupiter.html';
             }
-            
-            window.location.href = treeFile;
+            // ВИКОРИСТОВУЄМО НОВУ ФУНКЦІЮ
+            window.navigateTo(treeFile);
+        });
+    }
+
+    // 3. Кнопка Інвентарю
+    const inventoryBtn = document.querySelector('.status-badge.inventory-sq');
+    if (inventoryBtn) {
+        inventoryBtn.addEventListener('click', () => {
+            // ВИКОРИСТОВУЄМО НОВУ ФУНКЦІЮ (вона сама додасть ID)
+            window.navigateTo('inventory.html');
         });
     }
 }
@@ -270,79 +225,40 @@ function initNavigation() {
 function initHyperSpace() {
     const container = document.getElementById('space-container');
     if (!container) return;
-
-    // Очищаємо, щоб не накладалося
-    container.innerHTML = ''; 
-
-    const starCount = 300; 
+    container.innerHTML = '';
+    const starCount = 300;
 
     for (let i = 0; i < starCount; i++) {
         const star = document.createElement('div');
         star.classList.add('star');
-
-        // Випадкова позиція по ширині
         const x = Math.random() * 100;
         star.style.left = `${x}%`;
 
         const depth = Math.random();
         let size, duration;
 
-        // ЛОГІКА ГЛИБИНИ:
-        if (depth > 0.9) { 
-            // Дуже близько: великі, швидкі, зверху всіх
-            size = Math.random() * 3 + 2; 
-            duration = Math.random() * 1 + 0.5; // Дуже швидко (0.5 - 1.5 сек)
-            star.style.zIndex = "2"; 
-        } else if (depth > 0.6) { 
-            // Середня дистанція: середній розмір
+        if (depth > 0.9) {
+            size = Math.random() * 3 + 2;
+            duration = Math.random() * 1 + 0.5;
+            star.style.zIndex = "2";
+        } else if (depth > 0.6) {
             size = Math.random() * 2 + 1;
-            duration = Math.random() * 2 + 2; // Середня швидкість
-            
-            // Додаємо блакитні зірки
-            if (Math.random() > 0.8) star.classList.add('blue'); 
-        } else { 
-            // Далеко: маленькі, повільні, тьмяні
-            size = Math.random() * 1.5 + 0.5; 
-            duration = Math.random() * 5 + 5; // Повільно (5-10 сек)
+            duration = Math.random() * 2 + 2;
+            if (Math.random() > 0.8) star.classList.add('blue');
+        } else {
+            size = Math.random() * 1.5 + 0.5;
+            duration = Math.random() * 5 + 5;
             star.style.opacity = Math.random() * 0.5 + 0.1;
-            
-            // Додаємо туманні зірки (nebula)
             if (Math.random() > 0.9) star.classList.add('nebula');
         }
 
         star.style.width = `${size}px`;
         star.style.height = `${size}px`;
-        
-        // Встановлюємо тривалість польоту
         star.style.animationDuration = `${duration}s`;
-        // Випадкова затримка, щоб вони не летіли "стіною"
         star.style.animationDelay = `-${Math.random() * 10}s`;
-
         container.appendChild(star);
     }
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-    // ... existing code ...
-
-    // --- INVENTORY BUTTON LOGIC ---
-    const inventoryBtn = document.querySelector('.status-badge.inventory-sq');
-    if (inventoryBtn) {
-        inventoryBtn.addEventListener('click', () => {
-            // Get family_id from URL if it exists
-            const urlParams = new URLSearchParams(window.location.search);
-            const familyId = urlParams.get('family_id');
-            
-            if (familyId) {
-                window.location.href = `inventory.html?family_id=${familyId}`;
-            } else {
-                // Fallback if no ID is present (optional)
-                console.warn("No family_id found, redirecting without it.");
-                window.location.href = 'inventory.html';
-            }
-        });
-    }
-});
 
 // --- ДАНІ МОДУЛІВ ---
 const modulesData = {
@@ -356,37 +272,25 @@ const modulesData = {
     engine: { title: "Raptor Engine", desc: "Main propulsion.", integrity: 94, level: 90 }
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Запускаємо оновлення одразу при завантаженні
-    updateEarthResources();
-    // Оновлюємо кожні 5 секунд
-    setInterval(updateEarthResources, 5000);
-});
-
 async function updateEarthResources() {
-    // Отримуємо family_id з адресного рядка
     const urlParams = new URLSearchParams(window.location.search);
     const familyId = urlParams.get('family_id');
 
     if (!familyId) return;
 
     try {
-        // Запит до API
         const response = await fetch(`/api/inventory?family_id=${familyId}`);
         if (!response.ok) return;
-        
+
         const data = await response.json();
 
         if (data.resources) {
-            // Оновлюємо Спейскоіни
             const coinsEl = document.getElementById('val-coins');
             if (coinsEl) coinsEl.innerText = data.resources.coins;
 
-            // Оновлюємо Залізо (передбачається ID val-iron)
             const ironEl = document.getElementById('val-iron');
             if (ironEl) ironEl.innerText = data.resources.iron;
 
-            // Оновлюємо Паливо (передбачається ID val-fuel)
             const fuelEl = document.getElementById('val-fuel');
             if (fuelEl) fuelEl.innerText = data.resources.fuel;
         }
